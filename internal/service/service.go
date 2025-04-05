@@ -16,5 +16,5 @@ func Task(ctx context.Context, s StorageTaskGetter, id uint64) (entities.Task, e
 	if err != nil {
 		return task, fmt.Errorf("could not get task: %w", err)
 	}
-	return task, err
+	return task, nil
 }

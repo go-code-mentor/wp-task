@@ -1,4 +1,4 @@
-package service
+package service_test
 
 import (
 	"context"
@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	"github.com/go-code-mentor/wp-task/internal/entities"
+	"github.com/go-code-mentor/wp-task/internal/service"
 )
 
 type MockedServices struct {
@@ -34,7 +35,7 @@ func TestTaskGetting(t *testing.T) {
 		s := new(MockedServices)
 		s.On("Task", task.ID).Return(task, nil)
 
-		result, err := Task(ctx, s, task.ID)
+		result, err := service.Task(ctx, s, task.ID)
 
 		s.AssertExpectations(t)
 
@@ -50,7 +51,7 @@ func TestTaskGetting(t *testing.T) {
 		s := new(MockedServices)
 		s.On("Task", taskId).Return(entities.Task{}, fmt.Errorf("error"))
 
-		_, err := Task(ctx, s, taskId)
+		_, err := service.Task(ctx, s, taskId)
 		s.AssertExpectations(t)
 
 		assert.Error(t, err)
