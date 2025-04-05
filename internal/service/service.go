@@ -3,20 +3,16 @@ package service
 import (
 	"context"
 	"fmt"
+
+	"github.com/go-code-mentor/wp-task/internal/entities"
 )
 
-type Task struct {
-	ID          uint32
-	Name        string
-	Description string
-}
-
 type StorageTaskGetter interface {
-	Task(id uint32) (Task, error)
+	Task(ctx context.Context, id uint64) (entities.Task, error)
 }
 
-func GetTask(ctx context.Context, s StorageTaskGetter, id uint32) (Task, error) {
-	task, err := s.Task(id)
+func Task(ctx context.Context, s StorageTaskGetter, id uint64) (entities.Task, error) {
+	task, err := s.Task(ctx, id)
 	if err != nil {
 		return task, fmt.Errorf("could not get task: %w", err)
 	}

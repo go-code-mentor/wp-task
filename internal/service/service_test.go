@@ -7,32 +7,30 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+
+	"github.com/go-code-mentor/wp-task/internal/entities"
 )
 
 type MockedServices struct {
 	mock.Mock
 }
 
-func (m *MockedServices) Task(id uint32) (Task, error) {
+func (m *MockedServices) Task(ctx context.Context, id uint64) (entities.Task, error) {
 	args := m.Called(id)
-	return args.Get(0).(Task), args.Error(1)
+	return args.Get(0).(entities.Task), args.Error(1)
 }
 
 func TestTaskGetting(t *testing.T) {
 
 	t.Run("success task getting", func(t *testing.T) {
 
-		task := Task{
-			ID:          1,
-			Name:        "Test task",
-			Description: "test task description",
-		}
+		task := *entities.NewTask(1, "Test task", "test task description")
 
 		ctx := context.Background()
 		s := new(MockedServices)
 		s.On("Task", task.ID).Return(task, nil)
 
-		result, err := GetTask(ctx, s, task.ID)
+		result, err := Task(ctx, s, task.ID)
 
 		s.AssertExpectations(t)
 
@@ -43,12 +41,12 @@ func TestTaskGetting(t *testing.T) {
 	})
 
 	t.Run("task getting with error", func(t *testing.T) {
-		taskId := uint32(1)
+		taskId := uint64(1)
 		ctx := context.Background()
 		s := new(MockedServices)
-		s.On("Task", taskId).Return(Task{}, fmt.Errorf("error"))
+		s.On("Task", taskId).Return(*entities.NewTask(0, "", ""), fmt.Errorf("error"))
 
-		_, err := GetTask(ctx, s, taskId)
+		_, err := Task(ctx, s, taskId)
 		s.AssertExpectations(t)
 
 		assert.Error(t, err)
