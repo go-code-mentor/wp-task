@@ -24,7 +24,11 @@ func TestTaskGetting(t *testing.T) {
 
 	t.Run("success task getting", func(t *testing.T) {
 
-		task := *entities.NewTask(1, "Test task", "test task description")
+		task := entities.Task{
+			ID:          1,
+			Name:        "Test task",
+			Description: "test task description",
+		}
 
 		ctx := context.Background()
 		s := new(MockedServices)
@@ -44,7 +48,7 @@ func TestTaskGetting(t *testing.T) {
 		taskId := uint64(1)
 		ctx := context.Background()
 		s := new(MockedServices)
-		s.On("Task", taskId).Return(*entities.NewTask(0, "", ""), fmt.Errorf("error"))
+		s.On("Task", taskId).Return(entities.Task{}, fmt.Errorf("error"))
 
 		_, err := Task(ctx, s, taskId)
 		s.AssertExpectations(t)
