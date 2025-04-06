@@ -63,7 +63,7 @@ func TestTaskGetting(t *testing.T) {
 	})
 }
 
-func TestTaskыGetting(t *testing.T) {
+func TestTasksGetting(t *testing.T) {
 
 	t.Run("success tasks getting", func(t *testing.T) {
 		task := entities.Task{
