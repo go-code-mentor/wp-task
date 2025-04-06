@@ -26,6 +26,11 @@ func (m *MockedServices) Tasks(ctx context.Context) ([]entities.Task, error) {
 	return args.Get(0).([]entities.Task), args.Error(1)
 }
 
+func (m *MockedServices) TaskRemove(ctx context.Context, id uint64) error {
+	args := m.Called(id)
+	return args.Error(0)
+}
+
 func TestTaskGetting(t *testing.T) {
 
 	t.Run("success task getting", func(t *testing.T) {
@@ -97,4 +102,35 @@ func TestTasksGetting(t *testing.T) {
 		assert.Error(t, err)
 	})
 
+}
+
+func TestTaskRemoving(t *testing.T) {
+
+	t.Run("success task removing", func(t *testing.T) {
+
+		taskId := uint64(1)
+
+		ctx := context.Background()
+		s := new(MockedServices)
+		s.On("TaskRemove", taskId).Return(nil)
+
+		err := service.TaskRemove(ctx, s, taskId)
+
+		s.AssertExpectations(t)
+
+		assert.NoError(t, err)
+
+	})
+
+	t.Run("task removing with error", func(t *testing.T) {
+		taskId := uint64(1)
+		ctx := context.Background()
+		s := new(MockedServices)
+		s.On("TaskRemove", taskId).Return(fmt.Errorf("error"))
+
+		err := service.TaskRemove(ctx, s, taskId)
+		s.AssertExpectations(t)
+
+		assert.Error(t, err)
+	})
 }
