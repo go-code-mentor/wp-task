@@ -43,7 +43,6 @@ func TestTaskListHandler(t *testing.T) {
 		ctx := context.Background()
 
 		h := &handlers.TasksHandler{
-			Ctx:     ctx,
 			Service: s,
 		}
 
@@ -81,7 +80,6 @@ func TestTaskListHandler(t *testing.T) {
 		ctx := context.Background()
 
 		h := &handlers.TasksHandler{
-			Ctx:     ctx,
 			Service: s,
 		}
 
@@ -107,7 +105,6 @@ func TestTaskListHandler(t *testing.T) {
 		ctx := context.Background()
 
 		h := &handlers.TasksHandler{
-			Ctx:     ctx,
 			Service: s,
 		}
 
