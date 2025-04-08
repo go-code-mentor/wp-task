@@ -4,15 +4,16 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/go-code-mentor/wp-task/internal/entities"
 	"net/http"
-
-	"github.com/go-code-mentor/wp-task/internal/service"
 )
 
+type Service interface {
+	Tasks(ctx context.Context) ([]entities.Task, error)
+}
+
 type TasksHandler struct {
-	Ctx     context.Context
-	Service service.StorageTasksGetter
-	Handler http.Handler
+	Service Service
 }
 
 func (h *TasksHandler) ListHandler(w http.ResponseWriter, r *http.Request) {
@@ -22,7 +23,7 @@ func (h *TasksHandler) ListHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tasks, err := h.Service.Tasks(h.Ctx)
+	tasks, err := h.Service.Tasks(r.Context())
 	if err != nil {
 		ErrInternalServerError(w, r, err.Error())
 		return
