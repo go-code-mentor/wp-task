@@ -32,105 +32,84 @@ func (m *MockedServices) TaskRemove(ctx context.Context, id uint64) error {
 }
 
 func TestTaskGetting(t *testing.T) {
-
 	t.Run("success task getting", func(t *testing.T) {
-
 		task := entities.Task{
 			ID:          1,
 			Name:        "Test task",
 			Description: "test task description",
 		}
-
 		ctx := context.Background()
-		s := new(MockedServices)
-		s.On("Task", task.ID).Return(task, nil)
+		storageMock := new(MockedServices)
+		storageMock.On("Task", task.ID).Return(task, nil)
+		s := service.New(storageMock)
 
-		result, err := service.Task(ctx, s, task.ID)
-
-		s.AssertExpectations(t)
-
+		result, err := s.Task(ctx, task.ID)
 		assert.NoError(t, err)
-
 		assert.Equal(t, task, result)
-
 	})
 
 	t.Run("task getting with error", func(t *testing.T) {
 		taskId := uint64(1)
 		ctx := context.Background()
-		s := new(MockedServices)
-		s.On("Task", taskId).Return(entities.Task{}, fmt.Errorf("error"))
+		storageMock := new(MockedServices)
+		storageMock.On("Task", taskId).Return(entities.Task{}, fmt.Errorf("error"))
+		s := service.New(storageMock)
 
-		_, err := service.Task(ctx, s, taskId)
-		s.AssertExpectations(t)
-
+		_, err := s.Task(ctx, taskId)
 		assert.Error(t, err)
 	})
 }
 
 func TestTasksGetting(t *testing.T) {
-
 	t.Run("success tasks getting", func(t *testing.T) {
 		task := entities.Task{
 			ID:          1,
 			Name:        "Test task",
 			Description: "test task description",
 		}
-
 		ctx := context.Background()
-		s := new(MockedServices)
-		s.On("Tasks").Return([]entities.Task{task}, nil)
+		storageMock := new(MockedServices)
+		storageMock.On("Tasks").Return([]entities.Task{task}, nil)
+		s := service.New(storageMock)
 
-		result, err := service.Tasks(ctx, s)
-
-		s.AssertExpectations(t)
-
+		result, err := s.Tasks(ctx)
 		assert.NoError(t, err)
-
 		assert.Equal(t, 1, len(result))
 		assert.Equal(t, task, result[0])
 	})
 
 	t.Run("tasks getting with error", func(t *testing.T) {
 		ctx := context.Background()
-		s := new(MockedServices)
-		s.On("Tasks").Return([]entities.Task{}, fmt.Errorf("error"))
+		storageMock := new(MockedServices)
+		storageMock.On("Tasks").Return([]entities.Task{}, fmt.Errorf("error"))
+		s := service.New(storageMock)
 
-		_, err := service.Tasks(ctx, s)
-		s.AssertExpectations(t)
-
+		_, err := s.Tasks(ctx)
 		assert.Error(t, err)
 	})
 
 }
 
 func TestTaskRemoving(t *testing.T) {
-
 	t.Run("success task removing", func(t *testing.T) {
-
 		taskId := uint64(1)
-
 		ctx := context.Background()
-		s := new(MockedServices)
-		s.On("TaskRemove", taskId).Return(nil)
+		storageMock := new(MockedServices)
+		storageMock.On("TaskRemove", taskId).Return(nil)
+		s := service.New(storageMock)
 
-		err := service.TaskRemove(ctx, s, taskId)
-
-		s.AssertExpectations(t)
-
+		err := s.TaskRemove(ctx, taskId)
 		assert.NoError(t, err)
-
 	})
 
 	t.Run("task removing with error", func(t *testing.T) {
 		taskId := uint64(1)
 		ctx := context.Background()
-		s := new(MockedServices)
-		s.On("TaskRemove", taskId).Return(fmt.Errorf("error"))
+		storageMock := new(MockedServices)
+		storageMock.On("TaskRemove", taskId).Return(fmt.Errorf("error"))
+		s := service.New(storageMock)
 
-		err := service.TaskRemove(ctx, s, taskId)
-		s.AssertExpectations(t)
-
+		err := s.TaskRemove(ctx, taskId)
 		assert.Error(t, err)
 	})
 }
