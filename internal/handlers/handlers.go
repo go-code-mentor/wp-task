@@ -43,14 +43,14 @@ func (h *TasksHandler) ListHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(response)
 }
 
-func (h *TasksHandler) GetItemHandler(w http.ResponseWriter, r *http.Request) {
+func (h *TasksHandler) ItemHandler(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method != http.MethodGet {
 		ErrMethodNotAllowed(w, r)
 		return
 	}
 
-	userId, err := GetUserId(r.URL.Path)
+	userId, err := GetTaskId(r.URL.Path)
 	if err != nil {
 		ErrBadRequest(w, r, "")
 	}
@@ -72,13 +72,13 @@ func (h *TasksHandler) GetItemHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(response)
 }
 
-func GetUserId(path string) (uint64, error) {
+func GetTaskId(path string) (uint64, error) {
 
 	if len(path) < 11 {
-		return 0, fmt.Errorf("unexpected users endpoint path. It must to starts with \"/api/users/\"")
+		return 0, fmt.Errorf("unexpected tasks endpoint path. It must to starts with \"/api/tasks/\"")
 	}
 
-	id, err := strconv.Atoi(path[len("/api/users/"):])
+	id, err := strconv.Atoi(path[len("/api/tasks/"):])
 	if err != nil {
 		return 0, err
 	}

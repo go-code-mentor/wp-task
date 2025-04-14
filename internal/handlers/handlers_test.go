@@ -125,7 +125,7 @@ func TestTaskListHandler(t *testing.T) {
 	})
 }
 
-func TestTaskGetItemHandler(t *testing.T) {
+func TestTaskItemHandler(t *testing.T) {
 
 	t.Run("success request", func(t *testing.T) {
 
@@ -147,7 +147,7 @@ func TestTaskGetItemHandler(t *testing.T) {
 
 		s.On("Task", ctx, task.ID).Return(task, nil)
 
-		h.GetItemHandler(w, r)
+		h.ItemHandler(w, r)
 
 		result := w.Result()
 
@@ -183,7 +183,7 @@ func TestTaskGetItemHandler(t *testing.T) {
 
 		for _, method := range []string{http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete} {
 			r := httptest.NewRequest(method, "/", bytes.NewReader([]byte("")))
-			h.GetItemHandler(w, r)
+			h.ItemHandler(w, r)
 
 			result := w.Result()
 			assert.Equal(t, http.StatusMethodNotAllowed, result.StatusCode)
@@ -208,7 +208,7 @@ func TestTaskGetItemHandler(t *testing.T) {
 
 		s.On("Task", ctx, uint64(0)).Return(entities.Task{}, fmt.Errorf("error"))
 
-		h.GetItemHandler(w, r)
+		h.ItemHandler(w, r)
 
 		result := w.Result()
 
@@ -231,7 +231,7 @@ func TestTaskGetItemHandler(t *testing.T) {
 
 		s.On("Task", ctx, uint64(0)).Return(entities.Task{}, fmt.Errorf("error"))
 
-		h.GetItemHandler(w, r)
+		h.ItemHandler(w, r)
 
 		result := w.Result()
 
