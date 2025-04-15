@@ -3,11 +3,7 @@ package main
 import (
 	"log"
 
-	"github.com/gofiber/fiber/v2"
-
 	"github.com/go-code-mentor/wp-task/internal/app"
-	"github.com/go-code-mentor/wp-task/internal/handlers"
-	"github.com/go-code-mentor/wp-task/internal/service"
 )
 
 func main() {
@@ -26,16 +22,4 @@ func main() {
 		log.Fatalf("failed to run app: %s", err)
 	}
 
-	appService := service.New(&service.FakeStorage{})
-	tasksHandler := handlers.TasksHandler{Service: appService}
-
-	webApp := fiber.New()
-
-	api := webApp.Group("/api")
-	v1 := api.Group("/v1")
-
-	v1.Get("/tasks", tasksHandler.ListHandler)
-	v1.Get("/tasks/:id", tasksHandler.ItemHandler)
-
-	log.Fatal(webApp.Listen(":3000"))
 }
