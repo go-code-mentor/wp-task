@@ -1,8 +1,6 @@
 package app
 
 import (
-	"context"
-
 	"github.com/go-code-mentor/wp-task/internal/handlers"
 	"github.com/go-code-mentor/wp-task/internal/service"
 	"github.com/gofiber/fiber/v2"
@@ -21,12 +19,10 @@ type App struct {
 
 func (a *App) Build() error {
 
-	ctx := context.Background()
-
 	a.server = fiber.New()
 
 	appService := service.New(&service.FakeStorage{})
-	tasksHandler := handlers.TasksHandler{Service: appService, Ctx: ctx}
+	tasksHandler := handlers.TasksHandler{Service: appService}
 
 	api := a.server.Group("/api")
 	v1 := api.Group("/v1")

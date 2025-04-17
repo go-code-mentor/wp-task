@@ -16,12 +16,11 @@ type Service interface {
 
 type TasksHandler struct {
 	Service Service
-	Ctx     context.Context
 }
 
 func (h *TasksHandler) ListHandler(c *fiber.Ctx) error {
 
-	tasks, err := h.Service.Tasks(h.Ctx)
+	tasks, err := h.Service.Tasks(c.Context())
 	if err != nil {
 		return fiber.ErrInternalServerError
 	}
@@ -36,7 +35,7 @@ func (h *TasksHandler) ItemHandler(c *fiber.Ctx) error {
 		return fiber.ErrNotFound
 	}
 
-	task, err := h.Service.Task(h.Ctx, uint64(taskId))
+	task, err := h.Service.Task(c.Context(), uint64(taskId))
 	if err != nil {
 		return fiber.ErrNotFound
 	}

@@ -41,9 +41,9 @@ func TestTaskGetting(t *testing.T) {
 		ctx := context.Background()
 		storageMock := new(MockedStorage)
 		storageMock.On("Task", ctx, task.ID).Return(task, nil)
-		s := service.New(ctx, storageMock)
+		s := service.New(storageMock)
 
-		result, err := s.Task(task.ID)
+		result, err := s.Task(ctx, task.ID)
 		assert.NoError(t, err)
 		assert.Equal(t, task, result)
 	})
@@ -53,9 +53,9 @@ func TestTaskGetting(t *testing.T) {
 		ctx := context.Background()
 		storageMock := new(MockedStorage)
 		storageMock.On("Task", ctx, taskId).Return(entities.Task{}, fmt.Errorf("error"))
-		s := service.New(ctx, storageMock)
+		s := service.New(storageMock)
 
-		_, err := s.Task(taskId)
+		_, err := s.Task(ctx, taskId)
 		assert.Error(t, err)
 	})
 }
@@ -70,9 +70,9 @@ func TestTasksGetting(t *testing.T) {
 		ctx := context.Background()
 		storageMock := new(MockedStorage)
 		storageMock.On("Tasks", ctx).Return([]entities.Task{task}, nil)
-		s := service.New(ctx, storageMock)
+		s := service.New(storageMock)
 
-		result, err := s.Tasks()
+		result, err := s.Tasks(ctx)
 		assert.NoError(t, err)
 		assert.Equal(t, 1, len(result))
 		assert.Equal(t, task, result[0])
@@ -82,9 +82,9 @@ func TestTasksGetting(t *testing.T) {
 		ctx := context.Background()
 		storageMock := new(MockedStorage)
 		storageMock.On("Tasks", ctx).Return([]entities.Task{}, fmt.Errorf("error"))
-		s := service.New(ctx, storageMock)
+		s := service.New(storageMock)
 
-		_, err := s.Tasks()
+		_, err := s.Tasks(ctx)
 		assert.Error(t, err)
 	})
 
@@ -96,9 +96,9 @@ func TestTaskRemoving(t *testing.T) {
 		ctx := context.Background()
 		storageMock := new(MockedStorage)
 		storageMock.On("TaskRemove", ctx, taskId).Return(nil)
-		s := service.New(ctx, storageMock)
+		s := service.New(storageMock)
 
-		err := s.TaskRemove(taskId)
+		err := s.TaskRemove(ctx, taskId)
 		assert.NoError(t, err)
 	})
 
@@ -107,9 +107,9 @@ func TestTaskRemoving(t *testing.T) {
 		ctx := context.Background()
 		storageMock := new(MockedStorage)
 		storageMock.On("TaskRemove", ctx, taskId).Return(fmt.Errorf("error"))
-		s := service.New(ctx, storageMock)
+		s := service.New(storageMock)
 
-		err := s.TaskRemove(taskId)
+		err := s.TaskRemove(ctx, taskId)
 		assert.Error(t, err)
 	})
 }
