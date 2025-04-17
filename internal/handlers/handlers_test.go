@@ -355,9 +355,6 @@ func TestTaskRemoveHandler(t *testing.T) {
 
 		w := httptest.NewRecorder()
 		r := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/v1/task/%d", id), nil)
-		//r.Form = make(url.Values)
-		//r.Form.Add("id", strconv.Itoa(int(id)))
-		r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 		s := new(MockedServices)
 		ctx := context.Background()
@@ -391,9 +388,7 @@ func TestTaskRemoveHandler(t *testing.T) {
 
 		for _, method := range []string{http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodGet} {
 			r := httptest.NewRequest(method, fmt.Sprintf("/api/v1/task/%d", id), nil)
-			//r.Form = make(url.Values)
-			//r.Form.Add("id", strconv.Itoa(int(id)))
-			r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
 			h.RemoveHandler(w, r)
 
 			result := w.Result()
@@ -406,10 +401,6 @@ func TestTaskRemoveHandler(t *testing.T) {
 	})
 
 	t.Run("invalid id format (not uint64)", func(t *testing.T) {
-
-		//r.Form = make(url.Values)
-		//r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-
 		s := new(MockedServices)
 		ctx := context.Background()
 
@@ -420,8 +411,7 @@ func TestTaskRemoveHandler(t *testing.T) {
 		for _, id := range []string{"string", "-1", "18446744073709551616", ""} {
 			w := httptest.NewRecorder()
 			r := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/v1/task/%v", id), nil)
-			//r.Form.Add("id", id)
-			//r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
 			h.RemoveHandler(w, r)
 
 			result := w.Result()
@@ -439,9 +429,6 @@ func TestTaskRemoveHandler(t *testing.T) {
 
 		w := httptest.NewRecorder()
 		r := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/v1/task/%d", id), nil)
-		//r.Form = make(url.Values)
-		//r.Form.Add("id", strconv.Itoa(int(id)))
-		//r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 		s := new(MockedServices)
 		ctx := context.Background()
@@ -467,9 +454,6 @@ func TestTaskRemoveHandler(t *testing.T) {
 
 		w := httptest.NewRecorder()
 		r := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/v1/task/%d", id), nil)
-		//r.Form = make(url.Values)
-		//r.Form.Add("id", strconv.Itoa(int(id)))
-		//r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 		s := new(MockedServices)
 		ctx := context.Background()
