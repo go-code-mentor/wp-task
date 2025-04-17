@@ -6,10 +6,10 @@ import (
 	"github.com/go-code-mentor/wp-task/internal/entities"
 )
 
-func (s *Service) TaskUpdate(ctx context.Context, task entities.Task) (entities.Task, error) {
-	taskRes, err := s.Storage.TaskUpdate(ctx, task)
+func (s *Service) TaskUpdate(ctx context.Context, task entities.Task) error {
+	err := s.Storage.TaskUpdate(ctx, task)
 	if err != nil {
-		return entities.Task{}, fmt.Errorf("unable to update task: %w", err)
+		return fmt.Errorf("unable to update task: %w", err)
 	}
-	return taskRes, nil
+	return nil
 }

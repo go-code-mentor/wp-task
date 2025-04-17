@@ -9,9 +9,9 @@ import (
 	"testing"
 )
 
-func (m *MockedServices) TaskUpdate(ctx context.Context, task entities.Task) (entities.Task, error) {
+func (m *MockedServices) TaskUpdate(ctx context.Context, task entities.Task) error {
 	args := m.Called(task)
-	return args.Get(0).(entities.Task), args.Error(1)
+	return args.Error(0)
 
 }
 
@@ -24,12 +24,11 @@ func TestTaskUpdating(t *testing.T) {
 		}
 		ctx := context.Background()
 		storageMock := new(MockedServices)
-		storageMock.On("TaskUpdate", task).Return(task, nil)
+		storageMock.On("TaskUpdate", task).Return(nil)
 		s := service.New(storageMock)
 
-		result, err := s.TaskUpdate(ctx, task)
+		err := s.TaskUpdate(ctx, task)
 		assert.NoError(t, err)
-		assert.Equal(t, task, result)
 	})
 
 	t.Run("task updating with error", func(t *testing.T) {
@@ -40,10 +39,10 @@ func TestTaskUpdating(t *testing.T) {
 		}
 		ctx := context.Background()
 		storageMock := new(MockedServices)
-		storageMock.On("TaskUpdate", task).Return(entities.Task{}, fmt.Errorf("error"))
+		storageMock.On("TaskUpdate", task).Return(fmt.Errorf("error"))
 		s := service.New(storageMock)
 
-		_, err := s.TaskUpdate(ctx, task)
+		err := s.TaskUpdate(ctx, task)
 		assert.Error(t, err)
 
 	})

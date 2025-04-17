@@ -11,7 +11,7 @@ type TaskStorage interface {
 	Task(ctx context.Context, id uint64) (entities.Task, error)
 	Tasks(ctx context.Context) ([]entities.Task, error)
 	TaskRemove(ctx context.Context, id uint64) error
-	TaskUpdate(ctx context.Context, task entities.Task) (entities.Task, error)
+	TaskUpdate(ctx context.Context, task entities.Task) error
 }
 
 func New(storage TaskStorage) *Service {
