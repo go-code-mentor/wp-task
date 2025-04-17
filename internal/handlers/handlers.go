@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
@@ -9,17 +10,18 @@ import (
 )
 
 type Service interface {
-	Tasks() ([]entities.Task, error)
-	Task(id uint64) (entities.Task, error)
+	Tasks(ctx context.Context) ([]entities.Task, error)
+	Task(ctx context.Context, id uint64) (entities.Task, error)
 }
 
 type TasksHandler struct {
 	Service Service
+	Ctx     context.Context
 }
 
 func (h *TasksHandler) ListHandler(c *fiber.Ctx) error {
 
-	tasks, err := h.Service.Tasks()
+	tasks, err := h.Service.Tasks(h.Ctx)
 	if err != nil {
 		return fiber.ErrInternalServerError
 	}
@@ -34,7 +36,7 @@ func (h *TasksHandler) ItemHandler(c *fiber.Ctx) error {
 		return fiber.ErrNotFound
 	}
 
-	task, err := h.Service.Task(uint64(taskId))
+	task, err := h.Service.Task(h.Ctx, uint64(taskId))
 	if err != nil {
 		return fiber.ErrNotFound
 	}

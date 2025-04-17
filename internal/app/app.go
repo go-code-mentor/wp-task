@@ -21,10 +21,12 @@ type App struct {
 
 func (a *App) Build() error {
 
+	ctx := context.Background()
+
 	a.server = fiber.New()
 
-	appService := service.New(context.Background(), &service.FakeStorage{})
-	tasksHandler := handlers.TasksHandler{Service: appService}
+	appService := service.New(&service.FakeStorage{})
+	tasksHandler := handlers.TasksHandler{Service: appService, Ctx: ctx}
 
 	api := a.server.Group("/api")
 	v1 := api.Group("/v1")

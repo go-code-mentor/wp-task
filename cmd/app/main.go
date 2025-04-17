@@ -20,8 +20,8 @@ func main() {
 
 	if err := a.Run(); err != nil {
 		log.Fatalf("failed to run app: %s", err)
-	} else {
-		log.Println("app successfully stopped")
 	}
+
+	log.Println("app successfully stopped")
 
 }
