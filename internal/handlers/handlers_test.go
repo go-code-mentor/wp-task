@@ -275,7 +275,6 @@ func TestTaskAddHandler(t *testing.T) {
 		h.AddHandler(w, r)
 
 		result := w.Result()
-		defer result.Body.Close()
 
 		assert.Equal(t, http.StatusOK, result.StatusCode)
 		s.AssertExpectations(t)
@@ -292,7 +291,6 @@ func TestTaskAddHandler(t *testing.T) {
 			h.AddHandler(w, r)
 
 			result := w.Result()
-			defer result.Body.Close()
 
 			assert.Equal(t, http.StatusMethodNotAllowed, result.StatusCode)
 			s.AssertNotCalled(t, "TaskAdd", mock.Anything, mock.Anything)
@@ -309,7 +307,6 @@ func TestTaskAddHandler(t *testing.T) {
 		h.AddHandler(w, r)
 
 		result := w.Result()
-		defer result.Body.Close()
 
 		assert.Equal(t, http.StatusBadRequest, result.StatusCode)
 		s.AssertNotCalled(t, "TaskAdd", mock.Anything, mock.Anything)
@@ -340,7 +337,6 @@ func TestTaskAddHandler(t *testing.T) {
 		h.AddHandler(w, r)
 
 		result := w.Result()
-		defer result.Body.Close()
 
 		assert.Equal(t, http.StatusInternalServerError, result.StatusCode)
 		s.AssertExpectations(t)

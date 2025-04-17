@@ -49,7 +49,6 @@ func (h *TasksHandler) ItemHandler(c *fiber.Ctx) error {
 }
 
 func (h *TasksHandler) AddHandler(w http.ResponseWriter, r *http.Request) {
-	defer r.Body.Close()
 	// Check HTTP Method
 	if r.Method != http.MethodPost {
 		ErrMethodNotAllowed(w, r)
