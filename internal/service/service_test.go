@@ -1,6 +1,7 @@
 package service_test
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -11,35 +12,36 @@ import (
 	"github.com/go-code-mentor/wp-task/internal/service"
 )
 
-type MockedServices struct {
+type MockedStorage struct {
 	mock.Mock
 }
 
-func (m *MockedServices) Task(id string) (entities.Task, error) {
-	args := m.Called(id)
+func (m *MockedStorage) Task(ctx context.Context, id uint64) (entities.Task, error) {
+	args := m.Called(ctx, id)
 	return args.Get(0).(entities.Task), args.Error(1)
 }
 
-func (m *MockedServices) Tasks() ([]entities.Task, error) {
-	args := m.Called()
+func (m *MockedStorage) Tasks(ctx context.Context) ([]entities.Task, error) {
+	args := m.Called(ctx)
 	return args.Get(0).([]entities.Task), args.Error(1)
 }
 
-func (m *MockedServices) TaskRemove(id string) error {
-	args := m.Called(id)
+func (m *MockedStorage) TaskRemove(ctx context.Context, id uint64) error {
+	args := m.Called(ctx, id)
 	return args.Error(0)
 }
 
 func TestTaskGetting(t *testing.T) {
 	t.Run("success task getting", func(t *testing.T) {
 		task := entities.Task{
-			ID:          "1",
+			ID:          1,
 			Name:        "Test task",
 			Description: "test task description",
 		}
-		storageMock := new(MockedServices)
-		storageMock.On("Task", task.ID).Return(task, nil)
-		s := service.New(storageMock)
+		ctx := context.Background()
+		storageMock := new(MockedStorage)
+		storageMock.On("Task", ctx, task.ID).Return(task, nil)
+		s := service.New(ctx, storageMock)
 
 		result, err := s.Task(task.ID)
 		assert.NoError(t, err)
@@ -47,10 +49,11 @@ func TestTaskGetting(t *testing.T) {
 	})
 
 	t.Run("task getting with error", func(t *testing.T) {
-		taskId := "1"
-		storageMock := new(MockedServices)
-		storageMock.On("Task", taskId).Return(entities.Task{}, fmt.Errorf("error"))
-		s := service.New(storageMock)
+		taskId := uint64(1)
+		ctx := context.Background()
+		storageMock := new(MockedStorage)
+		storageMock.On("Task", ctx, taskId).Return(entities.Task{}, fmt.Errorf("error"))
+		s := service.New(ctx, storageMock)
 
 		_, err := s.Task(taskId)
 		assert.Error(t, err)
@@ -60,13 +63,14 @@ func TestTaskGetting(t *testing.T) {
 func TestTasksGetting(t *testing.T) {
 	t.Run("success tasks getting", func(t *testing.T) {
 		task := entities.Task{
-			ID:          "1",
+			ID:          1,
 			Name:        "Test task",
 			Description: "test task description",
 		}
-		storageMock := new(MockedServices)
-		storageMock.On("Tasks").Return([]entities.Task{task}, nil)
-		s := service.New(storageMock)
+		ctx := context.Background()
+		storageMock := new(MockedStorage)
+		storageMock.On("Tasks", ctx).Return([]entities.Task{task}, nil)
+		s := service.New(ctx, storageMock)
 
 		result, err := s.Tasks()
 		assert.NoError(t, err)
@@ -75,9 +79,10 @@ func TestTasksGetting(t *testing.T) {
 	})
 
 	t.Run("tasks getting with error", func(t *testing.T) {
-		storageMock := new(MockedServices)
-		storageMock.On("Tasks").Return([]entities.Task{}, fmt.Errorf("error"))
-		s := service.New(storageMock)
+		ctx := context.Background()
+		storageMock := new(MockedStorage)
+		storageMock.On("Tasks", ctx).Return([]entities.Task{}, fmt.Errorf("error"))
+		s := service.New(ctx, storageMock)
 
 		_, err := s.Tasks()
 		assert.Error(t, err)
@@ -87,20 +92,22 @@ func TestTasksGetting(t *testing.T) {
 
 func TestTaskRemoving(t *testing.T) {
 	t.Run("success task removing", func(t *testing.T) {
-		taskId := "1"
-		storageMock := new(MockedServices)
-		storageMock.On("TaskRemove", taskId).Return(nil)
-		s := service.New(storageMock)
+		taskId := uint64(1)
+		ctx := context.Background()
+		storageMock := new(MockedStorage)
+		storageMock.On("TaskRemove", ctx, taskId).Return(nil)
+		s := service.New(ctx, storageMock)
 
 		err := s.TaskRemove(taskId)
 		assert.NoError(t, err)
 	})
 
 	t.Run("task removing with error", func(t *testing.T) {
-		taskId := "1"
-		storageMock := new(MockedServices)
-		storageMock.On("TaskRemove", taskId).Return(fmt.Errorf("error"))
-		s := service.New(storageMock)
+		taskId := uint64(1)
+		ctx := context.Background()
+		storageMock := new(MockedStorage)
+		storageMock.On("TaskRemove", ctx, taskId).Return(fmt.Errorf("error"))
+		s := service.New(ctx, storageMock)
 
 		err := s.TaskRemove(taskId)
 		assert.Error(t, err)

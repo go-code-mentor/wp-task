@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"strconv"
+
 	"github.com/gofiber/fiber/v2"
 
 	"github.com/go-code-mentor/wp-task/internal/entities"
@@ -8,7 +10,7 @@ import (
 
 type Service interface {
 	Tasks() ([]entities.Task, error)
-	Task(id string) (entities.Task, error)
+	Task(id uint64) (entities.Task, error)
 }
 
 type TasksHandler struct {
@@ -27,7 +29,12 @@ func (h *TasksHandler) ListHandler(c *fiber.Ctx) error {
 
 func (h *TasksHandler) ItemHandler(c *fiber.Ctx) error {
 
-	task, err := h.Service.Task(c.Params("id"))
+	taskId, err := strconv.Atoi(c.Params("id"))
+	if err != nil {
+		return fiber.ErrNotFound
+	}
+
+	task, err := h.Service.Task(uint64(taskId))
 	if err != nil {
 		return fiber.ErrNotFound
 	}

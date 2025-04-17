@@ -23,7 +23,7 @@ func (m *MockedServices) Tasks() ([]entities.Task, error) {
 	return args.Get(0).([]entities.Task), args.Error(1)
 }
 
-func (m *MockedServices) Task(taskId string) (entities.Task, error) {
+func (m *MockedServices) Task(taskId uint64) (entities.Task, error) {
 	args := m.Called(taskId)
 	return args.Get(0).(entities.Task), args.Error(1)
 }
@@ -33,7 +33,7 @@ func TestTaskListHandler(t *testing.T) {
 	t.Run("success request", func(t *testing.T) {
 
 		task := entities.Task{
-			ID:          "5",
+			ID:          5,
 			Name:        "test task",
 			Description: "test desc",
 		}
