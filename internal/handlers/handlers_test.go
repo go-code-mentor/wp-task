@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -56,8 +57,19 @@ func TestTaskListHandler(t *testing.T) {
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 		body := make([]byte, resp.ContentLength)
-		resp.Body.Read(body)
-		resp.Body.Close()
+
+		n, err := resp.Body.Read(body)
+		if n != int(resp.ContentLength) {
+			t.Fatal("Error reading response body:", err)
+		}
+		if err != nil && err != io.EOF {
+			t.Fatal("Error reading response body:", err)
+		}
+
+		err = resp.Body.Close()
+		if err != nil {
+			t.Fatal("Error closing body:", err)
+		}
 
 		encoded := []entities.Task{}
 		err = json.Unmarshal(body, &encoded)
@@ -139,8 +151,18 @@ func TestTaskItemHandler(t *testing.T) {
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 		body := make([]byte, resp.ContentLength)
-		resp.Body.Read(body)
-		resp.Body.Close()
+		n, err := resp.Body.Read(body)
+		if n != int(resp.ContentLength) {
+			t.Fatal("Error reading response body:", err)
+		}
+		if err != nil && err != io.EOF {
+			t.Fatal("Error reading response body:", err)
+		}
+
+		err = resp.Body.Close()
+		if err != nil {
+			t.Fatal("Error closing body:", err)
+		}
 
 		encoded := entities.Task{}
 		err = json.Unmarshal(body, &encoded)
