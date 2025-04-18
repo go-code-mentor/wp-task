@@ -66,7 +66,7 @@ func (h *TasksHandler) AddHandler(w http.ResponseWriter, r *http.Request) {
 	var task entities.Task
 	err = json.Unmarshal(body, &task)
 	if err != nil {
-		ErrInternalServerError(w, r, err.Error())
+		http.Error(w, fmt.Sprintf("unable to unmarshal JSON request body: %v", err), http.StatusBadRequest)
 		return
 	}
 
