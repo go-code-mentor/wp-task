@@ -12,6 +12,7 @@ import (
 	"github.com/go-code-mentor/wp-task/internal/entities"
 	"io"
 	"net/http"
+	"strings"
 )
 
 type Service interface {
@@ -68,21 +69,6 @@ func (h *TasksHandler) AddHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (h *TasksHandler) ItemHandler(c *fiber.Ctx) error {
-
-	taskId, err := strconv.Atoi(c.Params("id"))
-	if err != nil {
-		return fiber.ErrNotFound
-	}
-
-	task, err := h.Service.Task(c.Context(), uint64(taskId))
-	if err != nil {
-		return fiber.ErrNotFound
-	}
-
-	return c.JSON(task)
-}
-
 func (h *TasksHandler) RemoveHandler(w http.ResponseWriter, r *http.Request) {
 	// Check HTTP Method
 	if r.Method != http.MethodDelete {
@@ -90,15 +76,9 @@ func (h *TasksHandler) RemoveHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Parse URL fields
-	err := r.ParseForm()
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Failed to parse form: %v", err), http.StatusBadRequest)
-		return
-	}
-
 	// Fetching id value
-	urlId := r.FormValue("id")
+	parts := strings.Split(r.URL.Path, "/")
+	urlId := parts[len(parts)-1]
 
 	//Convert it to uint64
 	id, err := strconv.ParseUint(urlId, 10, 64)
@@ -112,12 +92,12 @@ func (h *TasksHandler) RemoveHandler(w http.ResponseWriter, r *http.Request) {
 
 	// If task not exist
 	if errors.Is(err, entities.ErrNoTask) {
-		http.Error(w, err.Error(), http.StatusNotFound)
+		http.Error(w, entities.ErrNoTask.Error(), http.StatusNotFound)
 		return
 	}
 	// Other errors
 	if err != nil {
-		ErrInternalServerError(w, r, err.Error())
+		ErrInternalServerError(w, r, http.StatusText(http.StatusNotFound))
 		return
 	}
 

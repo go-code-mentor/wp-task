@@ -9,9 +9,6 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
-	"strconv"
-	"strings"
 	"testing"
 
 	"github.com/gofiber/fiber/v2"
@@ -357,9 +354,9 @@ func TestTaskRemoveHandler(t *testing.T) {
 		id = 1
 
 		w := httptest.NewRecorder()
-		r := httptest.NewRequest(http.MethodDelete, "/", nil)
-		r.Form = make(url.Values)
-		r.Form.Add("id", strconv.Itoa(int(id)))
+		r := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/v1/task/%d", id), nil)
+		//r.Form = make(url.Values)
+		//r.Form.Add("id", strconv.Itoa(int(id)))
 		r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 		s := new(MockedServices)
@@ -393,9 +390,9 @@ func TestTaskRemoveHandler(t *testing.T) {
 		}
 
 		for _, method := range []string{http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodGet} {
-			r := httptest.NewRequest(method, "/", nil)
-			r.Form = make(url.Values)
-			r.Form.Add("id", strconv.Itoa(int(id)))
+			r := httptest.NewRequest(method, fmt.Sprintf("/api/v1/task/%d", id), nil)
+			//r.Form = make(url.Values)
+			//r.Form.Add("id", strconv.Itoa(int(id)))
 			r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 			h.RemoveHandler(w, r)
 
@@ -408,40 +405,10 @@ func TestTaskRemoveHandler(t *testing.T) {
 		}
 	})
 
-	t.Run("unable to parse URL", func(t *testing.T) {
-		var id uint64
-		id = 1
-
-		w := httptest.NewRecorder()
-		r := httptest.NewRequest(http.MethodDelete, "/", strings.NewReader("%ZZ"))
-		r.Form = make(url.Values)
-		r.Form.Add("id", fmt.Sprintf("%d;", id))
-		r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-
-		s := new(MockedServices)
-		ctx := context.Background()
-
-		h := &handlers.TasksHandler{
-			Service: s,
-		}
-
-		//s.On("TaskRemove", ctx, id).Return(fmt.Errorf("error"))
-
-		h.RemoveHandler(w, r)
-
-		result := w.Result()
-		defer result.Body.Close()
-
-		assert.Equal(t, http.StatusBadRequest, result.StatusCode)
-		s.AssertNotCalled(t, "TaskRemove", ctx, id)
-		s.AssertExpectations(t)
-	})
-
 	t.Run("invalid id format (not uint64)", func(t *testing.T) {
-		w := httptest.NewRecorder()
-		r := httptest.NewRequest(http.MethodDelete, "/", nil)
-		r.Form = make(url.Values)
-		r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+		//r.Form = make(url.Values)
+		//r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 		s := new(MockedServices)
 		ctx := context.Background()
@@ -450,10 +417,11 @@ func TestTaskRemoveHandler(t *testing.T) {
 			Service: s,
 		}
 
-		for _, id := range []string{"string", " 1425 ", "1425;", "-1", "18446744073709551616", ""} {
-
-			r.Form.Add("id", id)
-			r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		for _, id := range []string{"string", "-1", "18446744073709551616", ""} {
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/v1/task/%v", id), nil)
+			//r.Form.Add("id", id)
+			//r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 			h.RemoveHandler(w, r)
 
 			result := w.Result()
@@ -470,10 +438,10 @@ func TestTaskRemoveHandler(t *testing.T) {
 		id = 1
 
 		w := httptest.NewRecorder()
-		r := httptest.NewRequest(http.MethodDelete, "/", nil)
-		r.Form = make(url.Values)
-		r.Form.Add("id", strconv.Itoa(int(id)))
-		r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		r := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/v1/task/%d", id), nil)
+		//r.Form = make(url.Values)
+		//r.Form.Add("id", strconv.Itoa(int(id)))
+		//r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 		s := new(MockedServices)
 		ctx := context.Background()
@@ -498,10 +466,10 @@ func TestTaskRemoveHandler(t *testing.T) {
 		id = 1
 
 		w := httptest.NewRecorder()
-		r := httptest.NewRequest(http.MethodDelete, "/", nil)
-		r.Form = make(url.Values)
-		r.Form.Add("id", strconv.Itoa(int(id)))
-		r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		r := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/v1/task/%d", id), nil)
+		//r.Form = make(url.Values)
+		//r.Form.Add("id", strconv.Itoa(int(id)))
+		//r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 		s := new(MockedServices)
 		ctx := context.Background()
