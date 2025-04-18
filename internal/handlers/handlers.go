@@ -12,7 +12,6 @@ import (
 	"github.com/go-code-mentor/wp-task/internal/entities"
 	"io"
 	"net/http"
-	"net/url"
 )
 
 type Service interface {
@@ -34,21 +33,6 @@ func (h *TasksHandler) ListHandler(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(tasks)
-}
-
-func (h *TasksHandler) ItemHandler(c *fiber.Ctx) error {
-
-	taskId, err := strconv.Atoi(c.Params("id"))
-	if err != nil {
-		return fiber.ErrNotFound
-	}
-
-	task, err := h.Service.Task(c.Context(), uint64(taskId))
-	if err != nil {
-		return fiber.ErrNotFound
-	}
-
-	return c.JSON(task)
 }
 
 func (h *TasksHandler) AddHandler(w http.ResponseWriter, r *http.Request) {
@@ -84,6 +68,21 @@ func (h *TasksHandler) AddHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
+func (h *TasksHandler) ItemHandler(c *fiber.Ctx) error {
+
+	taskId, err := strconv.Atoi(c.Params("id"))
+	if err != nil {
+		return fiber.ErrNotFound
+	}
+
+	task, err := h.Service.Task(c.Context(), uint64(taskId))
+	if err != nil {
+		return fiber.ErrNotFound
+	}
+
+	return c.JSON(task)
+}
+
 func (h *TasksHandler) RemoveHandler(w http.ResponseWriter, r *http.Request) {
 	// Check HTTP Method
 	if r.Method != http.MethodDelete {
@@ -99,10 +98,9 @@ func (h *TasksHandler) RemoveHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Fetching id value
-	r.Form = make(url.Values)
 	urlId := r.FormValue("id")
 
-	//Convert if to uint64
+	//Convert it to uint64
 	id, err := strconv.ParseUint(urlId, 10, 64)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to parse id: %v", err), http.StatusBadRequest)
