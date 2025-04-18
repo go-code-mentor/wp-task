@@ -25,11 +25,16 @@ func (s *FakeStorage) TaskUpdate(ctx context.Context, t entities.Task) error {
 	return nil
 }
 
+func (s *FakeStorage) TaskAdd(ctx context.Context, task entities.Task) error {
+	return nil
+}
+
 type TaskStorage interface {
 	Task(ctx context.Context, id uint64) (entities.Task, error)
 	Tasks(ctx context.Context) ([]entities.Task, error)
 	TaskRemove(ctx context.Context, id uint64) error
 	TaskUpdate(ctx context.Context, task entities.Task) error
+	TaskAdd(ctx context.Context, task entities.Task) error
 }
 
 func New(storage TaskStorage) *Service {
@@ -70,6 +75,13 @@ func (s *Service) TaskUpdate(ctx context.Context, task entities.Task) error {
 	err := s.Storage.TaskUpdate(ctx, task)
 	if err != nil {
 		return fmt.Errorf("unable to update task: %w", err)
+	}
+	return nil
+}
+
+func (s *Service) TaskAdd(ctx context.Context, task entities.Task) error {
+	if err := s.Storage.TaskAdd(ctx, task); err != nil {
+		return fmt.Errorf("unable to add task: %w", err)
 	}
 	return nil
 }

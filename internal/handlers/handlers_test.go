@@ -31,6 +31,11 @@ func (m *MockedServices) Task(ctx context.Context, taskId uint64) (entities.Task
 	return args.Get(0).(entities.Task), args.Error(1)
 }
 
+func (m *MockedServices) TaskAdd(ctx context.Context, task entities.Task) error {
+	args := m.Called(ctx, task)
+	return args.Error(1)
+}
+
 func TestTaskListHandler(t *testing.T) {
 
 	t.Run("success request", func(t *testing.T) {

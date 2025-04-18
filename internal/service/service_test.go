@@ -37,6 +37,11 @@ func (m *MockedStorage) TaskUpdate(ctx context.Context, task entities.Task) erro
 
 }
 
+func (m *MockedStorage) TaskAdd(ctx context.Context, task entities.Task) error {
+	args := m.Called(ctx, task)
+	return args.Error(0)
+}
+
 func TestTaskGetting(t *testing.T) {
 	t.Run("success task getting", func(t *testing.T) {
 		task := entities.Task{
