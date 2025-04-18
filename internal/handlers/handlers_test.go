@@ -2,11 +2,17 @@ package handlers_test
 
 import (
 	"context"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
+	"github.com/gofiber/fiber/v2"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
 	"github.com/go-code-mentor/wp-task/internal/entities"
+	"github.com/go-code-mentor/wp-task/internal/handlers"
 )
 
 type MockedServices struct {
@@ -27,103 +33,41 @@ func TestTaskListHandler(t *testing.T) {
 
 	t.Run("success request", func(t *testing.T) {
 
-		// task := entities.Task{
-		// 	ID:          5,
-		// 	Name:        "test task",
-		// 	Description: "test desc",
-		// }
+		task := entities.Task{
+			ID:          5,
+			Name:        "test task",
+			Description: "test desc",
+		}
 
-		// app := fiber.New()
-		// ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
+		req := httptest.NewRequest(http.MethodGet, "/tasks", nil)
 
-		// s := new(MockedServices)
+		s := new(MockedServices)
+		// ctx := context.Background()
 
-		// h := &handlers.TasksHandler{
-		// 	Service: s,
-		// }
+		h := &handlers.TasksHandler{
+			Service: s,
+		}
 
-		// s.On("Tasks", context.Background()).Return([]entities.Task{task}, nil)
+		app := fiber.New()
 
-		// err := h.ListHandler(ctx)
-		// assert.NoError(t, err)
+		app.Get("/tasks", h.ListHandler)
 
-		// result := ctx.Response()
+		s.On("Tasks", mock.Anything).Return([]entities.Task{task}, nil)
 
-		// assert.Equal(t, fasthttp.StatusOK, result.StatusCode())
+		resp, err := app.Test(req)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
 
-		// body := result.Body()
+		body := make([]byte, resp.ContentLength)
+		resp.Body.Read(body)
+		resp.Body.Close()
 
-		// encoded := []entities.Task{}
-		// err = json.Unmarshal(body, &encoded)
+		encoded := []entities.Task{}
+		err = json.Unmarshal(body, &encoded)
 
-		// assert.NoError(t, err)
-		// assert.Equal(t, 1, len(encoded))
-		// assert.Equal(t, task, encoded[0])
-
-		// s.AssertExpectations(t)
-	})
-
-	// t.Run("internal server error", func(t *testing.T) {
-
-	// 	app := fiber.New()
-	// 	ctx := app.AcquireCtx(&fasthttp.RequestCtx{})
-
-	// 	s := new(MockedServices)
-
-	// 	h := &handlers.TasksHandler{
-	// 		Service: s,
-	// 	}
-
-	// 	s.On("Tasks").Return([]entities.Task{}, fmt.Errorf("error"))
-
-	// 	err := h.ListHandler(ctx)
-	// 	assert.Error(t, err)
-	// 	assert.Equal(t, err, fiber.ErrInternalServerError)
-
-	// 	s.AssertExpectations(t)
-	// })
-}
-
-func TestTaskItemHandler(t *testing.T) {
-
-	t.Run("success request", func(t *testing.T) {
-
-		// task := entities.Task{
-		// 	ID:          "5",
-		// 	Name:        "test task",
-		// 	Description: "test desc",
-		// }
-
-		// app := fiber.New()
-
-		// r := fasthttp.Request{}
-		// r.SetRequestURIBytes([]byte("/api/v1/tasks/5"))
-		// ctx := app.AcquireCtx(&fasthttp.RequestCtx{
-		// 	Request: r,
-		// })
-
-		// s := new(MockedServices)
-
-		// h := &handlers.TasksHandler{
-		// 	Service: s,
-		// }
-
-		// s.On("Task", task.ID).Return(task, nil)
-
-		// err := h.ItemHandler(ctx)
-		// assert.NoError(t, err)
-
-		// result := ctx.Response()
-
-		// assert.Equal(t, fasthttp.StatusOK, result.StatusCode())
-
-		// body := result.Body()
-
-		// encoded := entities.Task{}
-		// err = json.Unmarshal(body, &encoded)
-
-		// assert.NoError(t, err)
-		// assert.Equal(t, task, encoded)
+		assert.NoError(t, err)
+		assert.Equal(t, 1, len(encoded))
+		assert.Equal(t, task, encoded[0])
 
 		// s.AssertExpectations(t)
 	})
@@ -140,18 +84,18 @@ func TestTaskItemHandler(t *testing.T) {
 
 	// 	for _, method := range []string{http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete} {
 	// 		r := httptest.NewRequest(method, "/", bytes.NewReader([]byte("")))
-	// 		h.ItemHandler(w, r)
+	// 		h.ListHandler(w, r)
 
 	// 		result := w.Result()
 	// 		assert.Equal(t, http.StatusMethodNotAllowed, result.StatusCode)
 
-	// 		s.AssertNotCalled(t, "Task", ctx, 0)
+	// 		s.AssertNotCalled(t, "Tasks", ctx)
 	// 		s.AssertExpectations(t)
 
 	// 	}
 	// })
 
-	// t.Run("bad request", func(t *testing.T) {
+	// t.Run("internal server error", func(t *testing.T) {
 
 	// 	w := httptest.NewRecorder()
 	// 	r := httptest.NewRequest(http.MethodGet, "/", bytes.NewReader([]byte("")))
@@ -163,32 +107,9 @@ func TestTaskItemHandler(t *testing.T) {
 	// 		Service: s,
 	// 	}
 
-	// 	s.On("Task", ctx, uint64(0)).Return(entities.Task{}, fmt.Errorf("error"))
+	// 	s.On("Tasks", ctx).Return([]entities.Task{}, fmt.Errorf("error"))
 
-	// 	h.ItemHandler(w, r)
-
-	// 	result := w.Result()
-
-	// 	assert.Equal(t, http.StatusBadRequest, result.StatusCode)
-
-	// 	s.AssertExpectations(t)
-	// })
-
-	// t.Run("internal server error", func(t *testing.T) {
-
-	// 	w := httptest.NewRecorder()
-	// 	r := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/users/%d", 0), bytes.NewReader([]byte("")))
-
-	// 	s := new(MockedServices)
-	// 	ctx := context.Background()
-
-	// 	h := &handlers.TasksHandler{
-	// 		Service: s,
-	// 	}
-
-	// 	s.On("Task", ctx, uint64(0)).Return(entities.Task{}, fmt.Errorf("error"))
-
-	// 	h.ItemHandler(w, r)
+	// 	h.ListHandler(w, r)
 
 	// 	result := w.Result()
 
@@ -197,3 +118,119 @@ func TestTaskItemHandler(t *testing.T) {
 	// 	s.AssertExpectations(t)
 	// })
 }
+
+// func TestTaskItemHandler(t *testing.T) {
+
+// 	t.Run("success request", func(t *testing.T) {
+
+// 		task := entities.Task{
+// 			ID:          5,
+// 			Name:        "test task",
+// 			Description: "test desc",
+// 		}
+
+// 		w := httptest.NewRecorder()
+// 		r := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/users/%d", task.ID), bytes.NewReader([]byte("")))
+
+// 		s := new(MockedServices)
+// 		ctx := context.Background()
+
+// 		h := &handlers.TasksHandler{
+// 			Service: s,
+// 		}
+
+// 		s.On("Task", ctx, task.ID).Return(task, nil)
+
+// 		h.ItemHandler(w, r)
+
+// 		result := w.Result()
+
+// 		assert.Equal(t, http.StatusOK, result.StatusCode)
+
+// 		body, err := io.ReadAll(result.Body)
+// 		if err != nil {
+// 			t.Fatal("Error reading response body:", err)
+// 		}
+
+// 		if result.Body != nil {
+// 			result.Body.Close()
+// 		}
+
+// 		encoded := entities.Task{}
+// 		err = json.Unmarshal(body, &encoded)
+
+// 		assert.NoError(t, err)
+// 		assert.Equal(t, task, encoded)
+
+// 		s.AssertExpectations(t)
+// 	})
+
+// 	t.Run("method not allowed", func(t *testing.T) {
+// 		w := httptest.NewRecorder()
+
+// 		s := new(MockedServices)
+// 		ctx := context.Background()
+
+// 		h := &handlers.TasksHandler{
+// 			Service: s,
+// 		}
+
+// 		for _, method := range []string{http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete} {
+// 			r := httptest.NewRequest(method, "/", bytes.NewReader([]byte("")))
+// 			h.ItemHandler(w, r)
+
+// 			result := w.Result()
+// 			assert.Equal(t, http.StatusMethodNotAllowed, result.StatusCode)
+
+// 			s.AssertNotCalled(t, "Task", ctx, 0)
+// 			s.AssertExpectations(t)
+
+// 		}
+// 	})
+
+// 	t.Run("bad request", func(t *testing.T) {
+
+// 		w := httptest.NewRecorder()
+// 		r := httptest.NewRequest(http.MethodGet, "/", bytes.NewReader([]byte("")))
+
+// 		s := new(MockedServices)
+// 		ctx := context.Background()
+
+// 		h := &handlers.TasksHandler{
+// 			Service: s,
+// 		}
+
+// 		s.On("Task", ctx, uint64(0)).Return(entities.Task{}, fmt.Errorf("error"))
+
+// 		h.ItemHandler(w, r)
+
+// 		result := w.Result()
+
+// 		assert.Equal(t, http.StatusBadRequest, result.StatusCode)
+
+// 		s.AssertExpectations(t)
+// 	})
+
+// 	t.Run("internal server error", func(t *testing.T) {
+
+// 		w := httptest.NewRecorder()
+// 		r := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/users/%d", 0), bytes.NewReader([]byte("")))
+
+// 		s := new(MockedServices)
+// 		ctx := context.Background()
+
+// 		h := &handlers.TasksHandler{
+// 			Service: s,
+// 		}
+
+// 		s.On("Task", ctx, uint64(0)).Return(entities.Task{}, fmt.Errorf("error"))
+
+// 		h.ItemHandler(w, r)
+
+// 		result := w.Result()
+
+// 		assert.Equal(t, http.StatusInternalServerError, result.StatusCode)
+
+// 		s.AssertExpectations(t)
+// 	})
+// }
