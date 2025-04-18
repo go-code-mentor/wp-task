@@ -9,6 +9,8 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
+	"strconv"
 	"testing"
 
 	"github.com/gofiber/fiber/v2"
@@ -35,6 +37,11 @@ func (m *MockedServices) Task(ctx context.Context, taskId uint64) (entities.Task
 
 func (m *MockedServices) TaskAdd(ctx context.Context, task entities.Task) error {
 	args := m.Called(ctx, task)
+	return args.Error(0)
+}
+
+func (m *MockedServices) TaskRemove(ctx context.Context, id uint64) error {
+	args := m.Called(ctx, id)
 	return args.Error(0)
 }
 
@@ -339,6 +346,90 @@ func TestTaskAddHandler(t *testing.T) {
 		result := w.Result()
 
 		assert.Equal(t, http.StatusInternalServerError, result.StatusCode)
+		s.AssertExpectations(t)
+	})
+}
+
+func TestTaskRemoveHandler(t *testing.T) {
+	t.Run("success request", func(t *testing.T) {
+		var id uint64
+		id = 1
+
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodDelete, "/", nil)
+		r.Form = make(url.Values)
+		r.Form.Add("id", strconv.Itoa(int(id)))
+		r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+		s := new(MockedServices)
+		ctx := context.Background()
+
+		h := &handlers.TasksHandler{
+			Service: s,
+		}
+
+		s.On("TaskRemove", ctx, id).Return(nil)
+
+		h.RemoveHandler(w, r)
+
+		result := w.Result()
+		defer result.Body.Close()
+
+		assert.Equal(t, http.StatusOK, result.StatusCode)
+		s.AssertExpectations(t)
+	})
+
+	t.Run("method not allowed", func(t *testing.T) {
+		w := httptest.NewRecorder()
+
+		s := new(MockedServices)
+		ctx := context.Background()
+
+		h := &handlers.TasksHandler{
+			Service: s,
+		}
+
+		for _, method := range []string{http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodGet} {
+			id := 1
+			r := httptest.NewRequest(method, "/", nil)
+			r.Form = make(url.Values)
+			r.Form.Add("id", strconv.Itoa(id))
+			r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+			h.RemoveHandler(w, r)
+
+			result := w.Result()
+			assert.Equal(t, http.StatusMethodNotAllowed, result.StatusCode)
+
+			s.AssertNotCalled(t, "TaskRemove", ctx)
+			s.AssertExpectations(t)
+
+		}
+	})
+
+	t.Run("unable to parse URL", func(t *testing.T) {
+		id := 1
+
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodDelete, "/", nil)
+		r.Form = make(url.Values)
+		r.Form.Add("id", strconv.Itoa(id))
+		//r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+		s := new(MockedServices)
+		ctx := context.Background()
+
+		h := &handlers.TasksHandler{
+			Service: s,
+		}
+
+		s.On("TaskRemove", ctx, id).Return(fmt.Errorf("error"))
+
+		h.RemoveHandler(w, r)
+
+		result := w.Result()
+		defer result.Body.Close()
+
+		assert.Equal(t, http.StatusBadRequest, result.StatusCode)
 		s.AssertExpectations(t)
 	})
 }
