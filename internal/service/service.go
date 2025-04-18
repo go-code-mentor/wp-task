@@ -21,6 +21,10 @@ func (s *FakeStorage) TaskRemove(ctx context.Context, id uint64) error {
 	return nil
 }
 
+func (s *FakeStorage) TaskUpdate(ctx context.Context, t entities.Task) error {
+	return nil
+}
+
 type TaskStorage interface {
 	Task(ctx context.Context, id uint64) (entities.Task, error)
 	Tasks(ctx context.Context) ([]entities.Task, error)
@@ -58,6 +62,14 @@ func (s *Service) TaskRemove(ctx context.Context, id uint64) error {
 	err := s.Storage.TaskRemove(ctx, id)
 	if err != nil {
 		return fmt.Errorf("could not remove task: %w", err)
+	}
+	return nil
+}
+
+func (s *Service) TaskUpdate(ctx context.Context, task entities.Task) error {
+	err := s.Storage.TaskUpdate(ctx, task)
+	if err != nil {
+		return fmt.Errorf("unable to update task: %w", err)
 	}
 	return nil
 }
