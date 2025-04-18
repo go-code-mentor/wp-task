@@ -1,8 +1,9 @@
 package main
 
 import (
-	"github.com/go-code-mentor/wp-task/internal/app"
 	"log"
+
+	"github.com/go-code-mentor/wp-task/internal/app"
 )
 
 func main() {
@@ -20,4 +21,7 @@ func main() {
 	if err := a.Run(); err != nil {
 		log.Fatalf("failed to run app: %s", err)
 	}
+
+	log.Println("app successfully stopped")
+
 }
