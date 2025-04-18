@@ -125,6 +125,39 @@ func TestTaskRemoving(t *testing.T) {
 	})
 }
 
+func TestTaskAdding(t *testing.T) {
+	t.Run("success task adding", func(t *testing.T) {
+		task := entities.Task{
+			ID:          1,
+			Name:        "Test task",
+			Description: "test task description",
+		}
+		ctx := context.Background()
+		storageMock := new(MockedStorage)
+		storageMock.On("TaskAdd", ctx, task).Return(nil)
+		s := service.New(storageMock)
+
+		err := s.TaskAdd(ctx, task)
+		assert.NoError(t, err)
+	})
+
+	t.Run("task adding with error", func(t *testing.T) {
+		task := entities.Task{
+			ID:          1,
+			Name:        "Test task",
+			Description: "test task description",
+		}
+		ctx := context.Background()
+		storageMock := new(MockedStorage)
+		storageMock.On("TaskAdd", ctx, task).Return(fmt.Errorf("error"))
+		s := service.New(storageMock)
+
+		err := s.TaskAdd(ctx, task)
+		assert.Error(t, err)
+	})
+
+}
+
 func TestTaskUpdating(t *testing.T) {
 	t.Run("success task updating", func(t *testing.T) {
 		task := entities.Task{
