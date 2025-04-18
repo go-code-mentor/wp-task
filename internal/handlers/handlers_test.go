@@ -3,6 +3,7 @@ package handlers_test
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -39,20 +40,16 @@ func TestTaskListHandler(t *testing.T) {
 			Description: "test desc",
 		}
 
-		req := httptest.NewRequest(http.MethodGet, "/tasks", nil)
-
 		s := new(MockedServices)
-		// ctx := context.Background()
-
 		h := &handlers.TasksHandler{
 			Service: s,
 		}
+		s.On("Tasks", mock.Anything).Return([]entities.Task{task}, nil)
 
 		app := fiber.New()
-
 		app.Get("/tasks", h.ListHandler)
 
-		s.On("Tasks", mock.Anything).Return([]entities.Task{task}, nil)
+		req := httptest.NewRequest(http.MethodGet, "/tasks", nil)
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
@@ -72,165 +69,153 @@ func TestTaskListHandler(t *testing.T) {
 		// s.AssertExpectations(t)
 	})
 
-	// t.Run("method not allowed", func(t *testing.T) {
-	// 	w := httptest.NewRecorder()
+	t.Run("method not allowed", func(t *testing.T) {
 
-	// 	s := new(MockedServices)
-	// 	ctx := context.Background()
+		s := new(MockedServices)
+		h := &handlers.TasksHandler{
+			Service: s,
+		}
 
-	// 	h := &handlers.TasksHandler{
-	// 		Service: s,
-	// 	}
+		app := fiber.New()
+		app.Get("/tasks", h.ListHandler)
 
-	// 	for _, method := range []string{http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete} {
-	// 		r := httptest.NewRequest(method, "/", bytes.NewReader([]byte("")))
-	// 		h.ListHandler(w, r)
+		for _, method := range []string{http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete} {
 
-	// 		result := w.Result()
-	// 		assert.Equal(t, http.StatusMethodNotAllowed, result.StatusCode)
+			req := httptest.NewRequest(method, "/tasks", nil)
 
-	// 		s.AssertNotCalled(t, "Tasks", ctx)
-	// 		s.AssertExpectations(t)
+			resp, err := app.Test(req)
+			assert.NoError(t, err)
+			assert.Equal(t, http.StatusMethodNotAllowed, resp.StatusCode)
 
-	// 	}
-	// })
+			s.AssertNotCalled(t, "Tasks", mock.Anything)
+			s.AssertExpectations(t)
+		}
+	})
 
-	// t.Run("internal server error", func(t *testing.T) {
+	t.Run("internal server error", func(t *testing.T) {
 
-	// 	w := httptest.NewRecorder()
-	// 	r := httptest.NewRequest(http.MethodGet, "/", bytes.NewReader([]byte("")))
+		s := new(MockedServices)
+		h := &handlers.TasksHandler{
+			Service: s,
+		}
+		s.On("Tasks", mock.Anything).Return([]entities.Task{}, fmt.Errorf("error"))
 
-	// 	s := new(MockedServices)
-	// 	ctx := context.Background()
+		app := fiber.New()
+		app.Get("/tasks", h.ListHandler)
 
-	// 	h := &handlers.TasksHandler{
-	// 		Service: s,
-	// 	}
+		req := httptest.NewRequest(http.MethodGet, "/tasks", nil)
 
-	// 	s.On("Tasks", ctx).Return([]entities.Task{}, fmt.Errorf("error"))
+		resp, err := app.Test(req)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
 
-	// 	h.ListHandler(w, r)
-
-	// 	result := w.Result()
-
-	// 	assert.Equal(t, http.StatusInternalServerError, result.StatusCode)
-
-	// 	s.AssertExpectations(t)
-	// })
+		s.AssertExpectations(t)
+	})
 }
 
-// func TestTaskItemHandler(t *testing.T) {
+func TestTaskItemHandler(t *testing.T) {
 
-// 	t.Run("success request", func(t *testing.T) {
+	t.Run("success request", func(t *testing.T) {
 
-// 		task := entities.Task{
-// 			ID:          5,
-// 			Name:        "test task",
-// 			Description: "test desc",
-// 		}
+		task := entities.Task{
+			ID:          5,
+			Name:        "test task",
+			Description: "test desc",
+		}
 
-// 		w := httptest.NewRecorder()
-// 		r := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/users/%d", task.ID), bytes.NewReader([]byte("")))
+		s := new(MockedServices)
+		h := &handlers.TasksHandler{
+			Service: s,
+		}
+		s.On("Task", mock.Anything, task.ID).Return(task, nil)
 
-// 		s := new(MockedServices)
-// 		ctx := context.Background()
+		app := fiber.New()
+		app.Get("/tasks/:id", h.ItemHandler)
 
-// 		h := &handlers.TasksHandler{
-// 			Service: s,
-// 		}
+		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/tasks/%d", task.ID), nil)
 
-// 		s.On("Task", ctx, task.ID).Return(task, nil)
+		resp, err := app.Test(req)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
 
-// 		h.ItemHandler(w, r)
+		body := make([]byte, resp.ContentLength)
+		resp.Body.Read(body)
+		resp.Body.Close()
 
-// 		result := w.Result()
+		encoded := entities.Task{}
+		err = json.Unmarshal(body, &encoded)
 
-// 		assert.Equal(t, http.StatusOK, result.StatusCode)
+		assert.NoError(t, err)
+		assert.Equal(t, task, encoded)
 
-// 		body, err := io.ReadAll(result.Body)
-// 		if err != nil {
-// 			t.Fatal("Error reading response body:", err)
-// 		}
+		s.AssertExpectations(t)
+	})
 
-// 		if result.Body != nil {
-// 			result.Body.Close()
-// 		}
+	t.Run("method not allowed", func(t *testing.T) {
 
-// 		encoded := entities.Task{}
-// 		err = json.Unmarshal(body, &encoded)
+		taskId := uint64(1)
 
-// 		assert.NoError(t, err)
-// 		assert.Equal(t, task, encoded)
+		s := new(MockedServices)
+		h := &handlers.TasksHandler{
+			Service: s,
+		}
 
-// 		s.AssertExpectations(t)
-// 	})
+		app := fiber.New()
+		app.Get("/tasks/:id", h.ItemHandler)
 
-// 	t.Run("method not allowed", func(t *testing.T) {
-// 		w := httptest.NewRecorder()
+		for _, method := range []string{http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete} {
+			req := httptest.NewRequest(method, fmt.Sprintf("/tasks/%d", taskId), nil)
 
-// 		s := new(MockedServices)
-// 		ctx := context.Background()
+			resp, err := app.Test(req)
+			assert.NoError(t, err)
+			assert.Equal(t, http.StatusMethodNotAllowed, resp.StatusCode)
 
-// 		h := &handlers.TasksHandler{
-// 			Service: s,
-// 		}
+			s.AssertNotCalled(t, "Task", mock.Anything, taskId)
+			s.AssertExpectations(t)
+		}
+	})
 
-// 		for _, method := range []string{http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete} {
-// 			r := httptest.NewRequest(method, "/", bytes.NewReader([]byte("")))
-// 			h.ItemHandler(w, r)
+	t.Run("error not found - wrong type of task id", func(t *testing.T) {
 
-// 			result := w.Result()
-// 			assert.Equal(t, http.StatusMethodNotAllowed, result.StatusCode)
+		taskId := "abc"
 
-// 			s.AssertNotCalled(t, "Task", ctx, 0)
-// 			s.AssertExpectations(t)
+		s := new(MockedServices)
+		h := &handlers.TasksHandler{
+			Service: s,
+		}
 
-// 		}
-// 	})
+		app := fiber.New()
+		app.Get("/tasks/:id", h.ItemHandler)
 
-// 	t.Run("bad request", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/tasks/%s", taskId), nil)
 
-// 		w := httptest.NewRecorder()
-// 		r := httptest.NewRequest(http.MethodGet, "/", bytes.NewReader([]byte("")))
+		resp, err := app.Test(req)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusNotFound, resp.StatusCode)
 
-// 		s := new(MockedServices)
-// 		ctx := context.Background()
+		s.AssertNotCalled(t, "Task", mock.Anything, taskId)
+		s.AssertExpectations(t)
+	})
 
-// 		h := &handlers.TasksHandler{
-// 			Service: s,
-// 		}
+	t.Run("error not found - task not exists in storage", func(t *testing.T) {
 
-// 		s.On("Task", ctx, uint64(0)).Return(entities.Task{}, fmt.Errorf("error"))
+		taskId := uint64(1)
 
-// 		h.ItemHandler(w, r)
+		s := new(MockedServices)
+		h := &handlers.TasksHandler{
+			Service: s,
+		}
+		s.On("Task", mock.Anything, taskId).Return(entities.Task{}, fmt.Errorf("error"))
 
-// 		result := w.Result()
+		app := fiber.New()
+		app.Get("/tasks/:id", h.ItemHandler)
 
-// 		assert.Equal(t, http.StatusBadRequest, result.StatusCode)
+		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/tasks/%d", taskId), nil)
 
-// 		s.AssertExpectations(t)
-// 	})
+		resp, err := app.Test(req)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusNotFound, resp.StatusCode)
 
-// 	t.Run("internal server error", func(t *testing.T) {
-
-// 		w := httptest.NewRecorder()
-// 		r := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/users/%d", 0), bytes.NewReader([]byte("")))
-
-// 		s := new(MockedServices)
-// 		ctx := context.Background()
-
-// 		h := &handlers.TasksHandler{
-// 			Service: s,
-// 		}
-
-// 		s.On("Task", ctx, uint64(0)).Return(entities.Task{}, fmt.Errorf("error"))
-
-// 		h.ItemHandler(w, r)
-
-// 		result := w.Result()
-
-// 		assert.Equal(t, http.StatusInternalServerError, result.StatusCode)
-
-// 		s.AssertExpectations(t)
-// 	})
-// }
+		s.AssertExpectations(t)
+	})
+}
