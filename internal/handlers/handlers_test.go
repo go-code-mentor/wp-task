@@ -500,7 +500,7 @@ func TestTaskUpdateHandler(t *testing.T) {
 		resp, err := app.Test(req)
 
 		assert.NoError(t, err)
-		assert.Equal(t, http.StatusNoContent, resp.StatusCode)
+		assert.Equal(t, fiber.StatusNoContent, resp.StatusCode)
 
 		s.AssertExpectations(t)
 	})
