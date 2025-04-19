@@ -138,7 +138,7 @@ func (h *TasksHandler) UpdateHandler(c *fiber.Ctx) error {
 		return fiber.ErrInternalServerError
 	}
 
-	return nil
+	return c.SendStatus(204)
 }
 
 func ErrMethodNotAllowed(w http.ResponseWriter, r *http.Request) {
