@@ -21,7 +21,7 @@ func (s *FakeStorage) TaskRemove(ctx context.Context, id uint64) error {
 	return nil
 }
 
-func (s *FakeStorage) TaskUpdate(ctx context.Context, t entities.Task) error {
+func (s *FakeStorage) TaskUpdate(ctx context.Context, task entities.Task) error {
 	return nil
 }
 
