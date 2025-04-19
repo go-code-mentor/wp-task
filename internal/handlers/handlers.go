@@ -20,6 +20,7 @@ type Service interface {
 	TaskAdd(ctx context.Context, task entities.Task) error
 	Task(ctx context.Context, id uint64) (entities.Task, error)
 	TaskRemove(ctx context.Context, id uint64) error
+	TaskUpdate(ctx context.Context, task entities.Task) error
 }
 
 type TasksHandler struct {
@@ -120,11 +121,29 @@ func (h *TasksHandler) RemoveHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
+func (h *TasksHandler) UpdateHandler(c *fiber.Ctx) error {
+	//Read body and parse JSON to DTO
+	var task entities.Task
+	err := json.Unmarshal(c.Body(), &task)
+	if err != nil {
+		return fiber.ErrBadRequest
+	}
+
+	//Update task in service
+	err = h.Service.TaskUpdate(c.Context(), task)
+	if err != nil {
+		return fiber.ErrInternalServerError
+	}
+
+	return nil
+}
+
 func ErrMethodNotAllowed(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, fmt.Sprintf("Method %s not allowed", r.Method), http.StatusMethodNotAllowed)
 }
 
 func ErrInternalServerError(w http.ResponseWriter, r *http.Request, err string) {
+	_ = r
 	if err == "" {
 		err = "Internal server error"
 	}
