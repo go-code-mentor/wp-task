@@ -1,0 +1,15 @@
+services:
+
+  db:
+    image: postgres:16-alpine
+    container_name: work_planner-db
+    env_file:
+      - path: .env
+        required: false
+    volumes:
+      - work_planner_postgres_data:/var/lib/postgresql/data:Z
+    ports:
+      - "5432:5432"
+
+volumes:
+  work_planner_postgres_data: {}
