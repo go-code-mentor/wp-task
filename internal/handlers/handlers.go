@@ -10,7 +10,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 
 	"github.com/go-code-mentor/wp-task/internal/entities"
-	"io"
 	"net/http"
 	"strings"
 )
@@ -51,37 +50,21 @@ func (h *TasksHandler) ListHandler(c *fiber.Ctx) error {
 	return c.JSON(tasks)
 }
 
-func (h *TasksHandler) AddHandler(w http.ResponseWriter, r *http.Request) {
-	// Check HTTP Method
-	if r.Method != http.MethodPost {
-		ErrMethodNotAllowed(w, r)
-		return
-	}
-
-	// Read request body.
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("unable to read request body: %v", err), http.StatusBadRequest)
-		return
-	}
-
-	//Parse JSON to DTO
+func (h *TasksHandler) AddHandler(c *fiber.Ctx) error {
+	//Read body and parse JSON to DTO
 	var task entities.Task
-	err = json.Unmarshal(body, &task)
+	err := json.Unmarshal(c.Body(), &task)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("unable to unmarshal JSON request body: %v", err), http.StatusBadRequest)
-		return
+		return fiber.ErrBadRequest
 	}
 
 	//Add task to service
-	err = h.Service.TaskAdd(r.Context(), task)
+	err = h.Service.TaskAdd(c.Context(), task)
 	if err != nil {
-		ErrInternalServerError(w, r, err.Error())
-		return
+		return fiber.ErrInternalServerError
 	}
 
-	w.WriteHeader(http.StatusOK)
-
+	return nil
 }
 
 func (h *TasksHandler) RemoveHandler(w http.ResponseWriter, r *http.Request) {

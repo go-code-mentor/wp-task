@@ -29,6 +29,7 @@ func (a *App) Build() error {
 
 	v1.Get("/tasks", tasksHandler.ListHandler)
 	v1.Get("/tasks/:id", tasksHandler.ItemHandler)
+	v1.Post("/tasks", tasksHandler.AddHandler)
 
 	return nil
 }

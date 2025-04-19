@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -261,60 +260,44 @@ func TestTaskAddHandler(t *testing.T) {
 			Name:        "Test task",
 			Description: "test task description",
 		}
-
-		requestBody, err := json.Marshal(task)
-		assert.NoError(t, err)
-
-		w := httptest.NewRecorder()
-		r := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader(requestBody))
-
 		s := new(MockedServices)
-		ctx := context.Background()
-
 		h := &handlers.TasksHandler{
 			Service: s,
 		}
 
-		s.On("TaskAdd", ctx, task).Return(nil)
+		body, err := json.Marshal(task)
+		assert.NoError(t, err)
 
-		h.AddHandler(w, r)
+		s.On("TaskAdd", mock.Anything, task).Return(nil)
 
-		result := w.Result()
+		app := fiber.New()
+		app.Post("/tasks", h.AddHandler)
 
-		assert.Equal(t, http.StatusOK, result.StatusCode)
+		req := httptest.NewRequest(http.MethodPost, "/tasks", bytes.NewReader(body))
+		resp, err := app.Test(req)
+
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+
 		s.AssertExpectations(t)
 	})
 
-	t.Run("method not allowed", func(t *testing.T) {
-		w := httptest.NewRecorder()
-		s := new(MockedServices)
-		h := &handlers.TasksHandler{Service: s}
-
-		// Проверяем все неподходящие методы
-		for _, method := range []string{http.MethodGet, http.MethodPut, http.MethodPatch, http.MethodDelete} {
-			r := httptest.NewRequest(method, "/", bytes.NewReader([]byte("")))
-			h.AddHandler(w, r)
-
-			result := w.Result()
-
-			assert.Equal(t, http.StatusMethodNotAllowed, result.StatusCode)
-			s.AssertNotCalled(t, "TaskAdd", mock.Anything, mock.Anything)
-		}
-	})
-
 	t.Run("invalid JSON", func(t *testing.T) {
-		w := httptest.NewRecorder()
-		r := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader([]byte("{invalid json}")))
-
 		s := new(MockedServices)
-		h := &handlers.TasksHandler{Service: s}
+		h := &handlers.TasksHandler{
+			Service: s,
+		}
+		app := fiber.New()
+		app.Post("/tasks", h.AddHandler)
 
-		h.AddHandler(w, r)
+		req := httptest.NewRequest(http.MethodPost, "/tasks", bytes.NewReader([]byte("{invalid json}")))
 
-		result := w.Result()
+		resp, err := app.Test(req)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
-		assert.Equal(t, http.StatusBadRequest, result.StatusCode)
 		s.AssertNotCalled(t, "TaskAdd", mock.Anything, mock.Anything)
+		s.AssertExpectations(t)
 	})
 
 	t.Run("internal server error", func(t *testing.T) {
@@ -324,26 +307,24 @@ func TestTaskAddHandler(t *testing.T) {
 			Description: "test task description",
 		}
 
-		requestBody, err := json.Marshal(task)
+		body, err := json.Marshal(task)
 		assert.NoError(t, err)
 
-		w := httptest.NewRecorder()
-		r := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader(requestBody))
-
 		s := new(MockedServices)
-		ctx := context.Background()
-
 		h := &handlers.TasksHandler{
 			Service: s,
 		}
 
-		s.On("TaskAdd", ctx, task).Return(errors.New("service error"))
+		app := fiber.New()
+		app.Post("/tasks", h.AddHandler)
 
-		h.AddHandler(w, r)
+		s.On("TaskAdd", mock.Anything, task).Return(fmt.Errorf("error"))
 
-		result := w.Result()
+		req := httptest.NewRequest(http.MethodPost, "/tasks", bytes.NewReader(body))
+		resp, err := app.Test(req)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
 
-		assert.Equal(t, http.StatusInternalServerError, result.StatusCode)
 		s.AssertExpectations(t)
 	})
 }
