@@ -131,6 +131,9 @@ func (h *TasksHandler) UpdateHandler(c *fiber.Ctx) error {
 
 	//Update task in service
 	err = h.Service.TaskUpdate(c.Context(), task)
+	if errors.Is(err, entities.ErrNoTask) {
+		return fiber.ErrNotFound
+	}
 	if err != nil {
 		return fiber.ErrInternalServerError
 	}

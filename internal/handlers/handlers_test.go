@@ -523,6 +523,34 @@ func TestTaskUpdateHandler(t *testing.T) {
 		s.AssertExpectations(t)
 	})
 
+	t.Run("task not found ", func(t *testing.T) {
+		task := entities.Task{
+			ID:          1,
+			Name:        "Test task",
+			Description: "test task description",
+		}
+
+		body, err := json.Marshal(task)
+		assert.NoError(t, err)
+
+		s := new(MockedServices)
+		h := &handlers.TasksHandler{
+			Service: s,
+		}
+
+		app := fiber.New()
+		app.Put("/tasks", h.UpdateHandler)
+
+		s.On("TaskUpdate", mock.Anything, task).Return(entities.ErrNoTask)
+
+		req := httptest.NewRequest(http.MethodPut, "/tasks", bytes.NewReader(body))
+		resp, err := app.Test(req)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusNotFound, resp.StatusCode)
+
+		s.AssertExpectations(t)
+	})
+
 	t.Run("internal server error", func(t *testing.T) {
 		task := entities.Task{
 			ID:          1,
