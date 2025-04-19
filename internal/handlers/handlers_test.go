@@ -277,7 +277,7 @@ func TestTaskAddHandler(t *testing.T) {
 		resp, err := app.Test(req)
 
 		assert.NoError(t, err)
-		assert.Equal(t, http.StatusOK, resp.StatusCode)
+		assert.Equal(t, fiber.StatusCreated, resp.StatusCode)
 
 		s.AssertExpectations(t)
 	})

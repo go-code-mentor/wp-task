@@ -61,7 +61,7 @@ func (h *TasksHandler) AddHandler(c *fiber.Ctx) error {
 		return fiber.ErrInternalServerError
 	}
 
-	return nil
+	return c.SendStatus(fiber.StatusCreated)
 }
 
 func (h *TasksHandler) RemoveHandler(c *fiber.Ctx) error {
