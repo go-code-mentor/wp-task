@@ -331,126 +331,89 @@ func TestTaskAddHandler(t *testing.T) {
 
 func TestTaskRemoveHandler(t *testing.T) {
 	t.Run("success request", func(t *testing.T) {
-		var id uint64
-		id = 1
 
-		w := httptest.NewRecorder()
-		r := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/v1/task/%d", id), nil)
+		task := entities.Task{
+			ID:          1,
+			Name:        "Test task",
+			Description: "test task description",
+		}
 
 		s := new(MockedServices)
-		ctx := context.Background()
-
 		h := &handlers.TasksHandler{
 			Service: s,
 		}
+		s.On("TaskRemove", mock.Anything, task.ID).Return(nil)
 
-		s.On("TaskRemove", ctx, id).Return(nil)
+		app := fiber.New()
+		app.Delete("/tasks/:id", h.RemoveHandler)
 
-		h.RemoveHandler(w, r)
+		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/tasks/%d", task.ID), nil)
 
-		result := w.Result()
-		defer result.Body.Close()
+		resp, err := app.Test(req)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
 
-		assert.Equal(t, http.StatusOK, result.StatusCode)
 		s.AssertExpectations(t)
-	})
-
-	t.Run("method not allowed", func(t *testing.T) {
-		var id uint64
-		id = 1
-		w := httptest.NewRecorder()
-
-		s := new(MockedServices)
-		ctx := context.Background()
-
-		h := &handlers.TasksHandler{
-			Service: s,
-		}
-
-		for _, method := range []string{http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodGet} {
-			r := httptest.NewRequest(method, fmt.Sprintf("/api/v1/task/%d", id), nil)
-
-			h.RemoveHandler(w, r)
-
-			result := w.Result()
-			assert.Equal(t, http.StatusMethodNotAllowed, result.StatusCode)
-
-			s.AssertNotCalled(t, "TaskRemove", ctx, id)
-			s.AssertExpectations(t)
-
-		}
 	})
 
 	t.Run("invalid id format (not uint64)", func(t *testing.T) {
 		s := new(MockedServices)
-		ctx := context.Background()
-
 		h := &handlers.TasksHandler{
 			Service: s,
 		}
+		app := fiber.New()
+		app.Delete("/tasks/:id", h.RemoveHandler)
+		for _, taskId := range []string{"string", "-1", "18446744073709551616"} {
+			req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/tasks/%s", taskId), nil)
 
-		for _, id := range []string{"string", "-1", "18446744073709551616", ""} {
-			w := httptest.NewRecorder()
-			r := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/v1/task/%v", id), nil)
+			resp, err := app.Test(req)
+			assert.NoError(t, err)
+			assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
-			h.RemoveHandler(w, r)
-
-			result := w.Result()
-			assert.Equal(t, http.StatusBadRequest, result.StatusCode)
-
-			s.AssertNotCalled(t, "TaskRemove", ctx, id)
+			s.AssertNotCalled(t, "TaskRemove", mock.Anything, taskId)
 			s.AssertExpectations(t)
-
 		}
 	})
 
-	t.Run("task not found", func(t *testing.T) {
-		var id uint64
-		id = 1
-
-		w := httptest.NewRecorder()
-		r := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/v1/task/%d", id), nil)
+	t.Run("error not found - task not exists in storage", func(t *testing.T) {
+		taskId := uint64(1)
 
 		s := new(MockedServices)
-		ctx := context.Background()
-
 		h := &handlers.TasksHandler{
 			Service: s,
 		}
+		s.On("TaskRemove", mock.Anything, taskId).Return(entities.ErrNoTask)
 
-		s.On("TaskRemove", ctx, id).Return(entities.ErrNoTask)
+		app := fiber.New()
+		app.Delete("/tasks/:id", h.RemoveHandler)
 
-		h.RemoveHandler(w, r)
+		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/tasks/%d", taskId), nil)
 
-		result := w.Result()
-		defer result.Body.Close()
+		resp, err := app.Test(req)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusNotFound, resp.StatusCode)
 
-		assert.Equal(t, http.StatusNotFound, result.StatusCode)
 		s.AssertExpectations(t)
 	})
 
-	t.Run("task removing with error", func(t *testing.T) {
-		var id uint64
-		id = 1
-
-		w := httptest.NewRecorder()
-		r := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/v1/task/%d", id), nil)
+	t.Run("internal server error", func(t *testing.T) {
+		taskId := uint64(1)
 
 		s := new(MockedServices)
-		ctx := context.Background()
-
 		h := &handlers.TasksHandler{
 			Service: s,
 		}
+		s.On("TaskRemove", mock.Anything, taskId).Return(fmt.Errorf("error"))
 
-		s.On("TaskRemove", ctx, id).Return(fmt.Errorf("error"))
+		app := fiber.New()
+		app.Delete("/tasks/:id", h.RemoveHandler)
 
-		h.RemoveHandler(w, r)
+		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/tasks/%d", taskId), nil)
 
-		result := w.Result()
-		defer result.Body.Close()
+		resp, err := app.Test(req)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
 
-		assert.Equal(t, http.StatusInternalServerError, result.StatusCode)
 		s.AssertExpectations(t)
 	})
 }
