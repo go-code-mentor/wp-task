@@ -27,6 +27,11 @@ type TasksHandler struct {
 	Service Service
 }
 
+type TaskJSON struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+}
+
 func (h *TasksHandler) ItemHandler(c *fiber.Ctx) error {
 
 	taskId, err := strconv.Atoi(c.Params("id"))
@@ -122,11 +127,24 @@ func (h *TasksHandler) RemoveHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *TasksHandler) UpdateHandler(c *fiber.Ctx) error {
+
+	taskId, err := strconv.Atoi(c.Params("id"))
+	if err != nil {
+		return fiber.ErrNotFound
+	}
+
 	//Read body and parse JSON to DTO
-	var task entities.Task
-	err := json.Unmarshal(c.Body(), &task)
+	var taskDTO TaskJSON
+	err = json.Unmarshal(c.Body(), &taskDTO)
 	if err != nil {
 		return fiber.ErrBadRequest
+	}
+
+	//Convert to task entity
+	task := entities.Task{
+		ID:          uint64(taskId),
+		Name:        taskDTO.Name,
+		Description: taskDTO.Description,
 	}
 
 	//Update task in service

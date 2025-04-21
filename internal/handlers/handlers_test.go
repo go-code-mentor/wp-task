@@ -478,27 +478,35 @@ func TestTaskRemoveHandler(t *testing.T) {
 
 func TestTaskUpdateHandler(t *testing.T) {
 	t.Run("success request", func(t *testing.T) {
-		task := entities.Task{
-			ID:          1,
+		var taskId uint64
+		taskId = 1
+
+		taskDTO := handlers.TaskJSON{
 			Name:        "Test task",
 			Description: "test task description",
 		}
+
 		s := new(MockedServices)
 		h := &handlers.TasksHandler{
 			Service: s,
 		}
 
-		body, err := json.Marshal(task)
+		body, err := json.Marshal(taskDTO)
 		assert.NoError(t, err)
+
+		task := entities.Task{
+			ID:          taskId,
+			Name:        taskDTO.Name,
+			Description: taskDTO.Description,
+		}
 
 		s.On("TaskUpdate", mock.Anything, task).Return(nil)
 
 		app := fiber.New()
 		app.Put("/tasks/:id", h.UpdateHandler)
 
-		req := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/tasks/%d", task.ID), bytes.NewReader(body))
+		req := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/tasks/%d", taskId), bytes.NewReader(body))
 		defer req.Body.Close()
-
 		resp, err := app.Test(req)
 
 		assert.NoError(t, err)
@@ -529,14 +537,22 @@ func TestTaskUpdateHandler(t *testing.T) {
 	})
 
 	t.Run("task not found ", func(t *testing.T) {
-		task := entities.Task{
-			ID:          1,
+		var taskId uint64
+		taskId = 1
+
+		taskDTO := handlers.TaskJSON{
 			Name:        "Test task",
 			Description: "test task description",
 		}
 
-		body, err := json.Marshal(task)
+		body, err := json.Marshal(taskDTO)
 		assert.NoError(t, err)
+
+		task := entities.Task{
+			ID:          taskId,
+			Name:        taskDTO.Name,
+			Description: taskDTO.Description,
+		}
 
 		s := new(MockedServices)
 		h := &handlers.TasksHandler{
@@ -548,7 +564,7 @@ func TestTaskUpdateHandler(t *testing.T) {
 
 		s.On("TaskUpdate", mock.Anything, task).Return(entities.ErrNoTask)
 
-		req := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/tasks/%d", task.ID), bytes.NewReader(body))
+		req := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/tasks/%d", taskId), bytes.NewReader(body))
 		defer req.Body.Close()
 
 		resp, err := app.Test(req)
@@ -559,14 +575,22 @@ func TestTaskUpdateHandler(t *testing.T) {
 	})
 
 	t.Run("internal server error", func(t *testing.T) {
-		task := entities.Task{
-			ID:          1,
+		var taskId uint64
+		taskId = 1
+
+		taskDTO := handlers.TaskJSON{
 			Name:        "Test task",
 			Description: "test task description",
 		}
 
-		body, err := json.Marshal(task)
+		body, err := json.Marshal(taskDTO)
 		assert.NoError(t, err)
+
+		task := entities.Task{
+			ID:          taskId,
+			Name:        taskDTO.Name,
+			Description: taskDTO.Description,
+		}
 
 		s := new(MockedServices)
 		h := &handlers.TasksHandler{
@@ -578,7 +602,7 @@ func TestTaskUpdateHandler(t *testing.T) {
 
 		s.On("TaskUpdate", mock.Anything, task).Return(fmt.Errorf("error"))
 
-		req := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/tasks/%d", task.ID), bytes.NewReader(body))
+		req := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/tasks/%d", taskId), bytes.NewReader(body))
 		defer req.Body.Close()
 
 		resp, err := app.Test(req)
