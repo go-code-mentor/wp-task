@@ -26,7 +26,7 @@ type App struct {
 func (a *App) Build() error {
 
 	if err := a.connectDb(); err != nil {
-		return err
+		return fmt.Errorf("failed to get db connection: %w", err)
 	}
 
 	a.server = fiber.New()
@@ -53,6 +53,10 @@ func (a *App) connectDb() error {
 	conn, err := pgx.Connect(context.Background(), a.cfg.pg_uri)
 	if err != nil {
 		return fmt.Errorf("could not connect db: %w", err)
+	}
+
+	if err := conn.Ping(context.Background()); err != nil {
+		return fmt.Errorf("could not ping db: %w", err)
 	}
 
 	a.conn = conn
