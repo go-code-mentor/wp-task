@@ -515,6 +515,26 @@ func TestTaskUpdateHandler(t *testing.T) {
 		s.AssertExpectations(t)
 	})
 
+	t.Run("invalid id format (not uint64)", func(t *testing.T) {
+		s := new(MockedServices)
+		h := &handlers.TasksHandler{
+			Service: s,
+		}
+		app := fiber.New()
+		app.Put("/tasks/:id", h.UpdateHandler)
+
+		for _, taskId := range []string{"string", "-1", "18446744073709551616"} {
+			req := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/tasks/%s", taskId), nil)
+
+			resp, err := app.Test(req)
+			assert.NoError(t, err)
+			assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+
+			s.AssertNotCalled(t, "TaskUpdate", mock.Anything, taskId)
+			s.AssertExpectations(t)
+		}
+	})
+
 	t.Run("invalid JSON", func(t *testing.T) {
 		taskID := 1
 		s := new(MockedServices)

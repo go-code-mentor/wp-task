@@ -128,9 +128,9 @@ func (h *TasksHandler) RemoveHandler(w http.ResponseWriter, r *http.Request) {
 
 func (h *TasksHandler) UpdateHandler(c *fiber.Ctx) error {
 
-	taskId, err := strconv.Atoi(c.Params("id"))
+	taskId, err := strconv.ParseUint(c.Params("id"), 10, 64)
 	if err != nil {
-		return fiber.ErrNotFound
+		return fiber.ErrBadRequest
 	}
 
 	//Read body and parse JSON to DTO
