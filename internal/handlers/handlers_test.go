@@ -494,9 +494,9 @@ func TestTaskUpdateHandler(t *testing.T) {
 		s.On("TaskUpdate", mock.Anything, task).Return(nil)
 
 		app := fiber.New()
-		app.Put("/tasks", h.UpdateHandler)
+		app.Put("/tasks/:id", h.UpdateHandler)
 
-		req := httptest.NewRequest(http.MethodPut, "/tasks", bytes.NewReader(body))
+		req := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/tasks/%d", task.ID), bytes.NewReader(body))
 		defer req.Body.Close()
 
 		resp, err := app.Test(req)
@@ -508,14 +508,15 @@ func TestTaskUpdateHandler(t *testing.T) {
 	})
 
 	t.Run("invalid JSON", func(t *testing.T) {
+		taskID := 1
 		s := new(MockedServices)
 		h := &handlers.TasksHandler{
 			Service: s,
 		}
 		app := fiber.New()
-		app.Put("/tasks", h.UpdateHandler)
+		app.Put("/tasks/:id", h.UpdateHandler)
 
-		req := httptest.NewRequest(http.MethodPut, "/tasks", bytes.NewReader([]byte("{invalid json}")))
+		req := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/tasks/%d", taskID), bytes.NewReader([]byte("{invalid json}")))
 		defer req.Body.Close()
 
 		resp, err := app.Test(req)
@@ -543,11 +544,11 @@ func TestTaskUpdateHandler(t *testing.T) {
 		}
 
 		app := fiber.New()
-		app.Put("/tasks", h.UpdateHandler)
+		app.Put("/tasks/:id", h.UpdateHandler)
 
 		s.On("TaskUpdate", mock.Anything, task).Return(entities.ErrNoTask)
 
-		req := httptest.NewRequest(http.MethodPut, "/tasks", bytes.NewReader(body))
+		req := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/tasks/%d", task.ID), bytes.NewReader(body))
 		defer req.Body.Close()
 
 		resp, err := app.Test(req)
@@ -573,11 +574,11 @@ func TestTaskUpdateHandler(t *testing.T) {
 		}
 
 		app := fiber.New()
-		app.Put("/tasks", h.UpdateHandler)
+		app.Put("/tasks/:id", h.UpdateHandler)
 
 		s.On("TaskUpdate", mock.Anything, task).Return(fmt.Errorf("error"))
 
-		req := httptest.NewRequest(http.MethodPut, "/tasks", bytes.NewReader(body))
+		req := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/tasks/%d", task.ID), bytes.NewReader(body))
 		defer req.Body.Close()
 
 		resp, err := app.Test(req)
