@@ -497,6 +497,8 @@ func TestTaskUpdateHandler(t *testing.T) {
 		app.Put("/tasks", h.UpdateHandler)
 
 		req := httptest.NewRequest(http.MethodPut, "/tasks", bytes.NewReader(body))
+		defer req.Body.Close()
+
 		resp, err := app.Test(req)
 
 		assert.NoError(t, err)
@@ -514,8 +516,10 @@ func TestTaskUpdateHandler(t *testing.T) {
 		app.Put("/tasks", h.UpdateHandler)
 
 		req := httptest.NewRequest(http.MethodPut, "/tasks", bytes.NewReader([]byte("{invalid json}")))
+		defer req.Body.Close()
 
 		resp, err := app.Test(req)
+
 		assert.NoError(t, err)
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
@@ -544,6 +548,8 @@ func TestTaskUpdateHandler(t *testing.T) {
 		s.On("TaskUpdate", mock.Anything, task).Return(entities.ErrNoTask)
 
 		req := httptest.NewRequest(http.MethodPut, "/tasks", bytes.NewReader(body))
+		defer req.Body.Close()
+
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
 		assert.Equal(t, http.StatusNotFound, resp.StatusCode)
@@ -572,6 +578,8 @@ func TestTaskUpdateHandler(t *testing.T) {
 		s.On("TaskUpdate", mock.Anything, task).Return(fmt.Errorf("error"))
 
 		req := httptest.NewRequest(http.MethodPut, "/tasks", bytes.NewReader(body))
+		defer req.Body.Close()
+
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
 		assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
