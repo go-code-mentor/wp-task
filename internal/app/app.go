@@ -39,6 +39,7 @@ func (a *App) Build() error {
 
 	v1.Get("/tasks", tasksHandler.ListHandler)
 	v1.Get("/tasks/:id", tasksHandler.ItemHandler)
+	v1.Put("/tasks/:id", tasksHandler.UpdateHandler)
 	v1.Post("/tasks", tasksHandler.AddHandler)
 	v1.Delete("/tasks/:id", tasksHandler.RemoveHandler)
 

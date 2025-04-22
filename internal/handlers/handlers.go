@@ -16,10 +16,16 @@ type Service interface {
 	TaskAdd(ctx context.Context, task entities.Task) error
 	Task(ctx context.Context, id uint64) (entities.Task, error)
 	TaskRemove(ctx context.Context, id uint64) error
+	TaskUpdate(ctx context.Context, task entities.Task) error
 }
 
 type TasksHandler struct {
 	Service Service
+}
+
+type TaskJSON struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
 }
 
 func (h *TasksHandler) ItemHandler(c *fiber.Ctx) error {
@@ -82,3 +88,38 @@ func (h *TasksHandler) RemoveHandler(c *fiber.Ctx) error {
 
 	return nil
 }
+
+func (h *TasksHandler) UpdateHandler(c *fiber.Ctx) error {
+
+	taskId, err := strconv.ParseUint(c.Params("id"), 10, 64)
+	if err != nil {
+		return fiber.ErrBadRequest
+	}
+
+	//Read body and parse JSON to DTO
+	var taskDTO TaskJSON
+	err = json.Unmarshal(c.Body(), &taskDTO)
+	if err != nil {
+		return fiber.ErrBadRequest
+	}
+
+	//Convert to task entity
+	task := entities.Task{
+		ID:          uint64(taskId),
+		Name:        taskDTO.Name,
+		Description: taskDTO.Description,
+	}
+
+	//Update task in service
+	err = h.Service.TaskUpdate(c.Context(), task)
+	if errors.Is(err, entities.ErrNoTask) {
+		return fiber.ErrNotFound
+	}
+	if err != nil {
+		return fiber.ErrInternalServerError
+	}
+
+	return c.SendStatus(fiber.StatusNoContent)
+}
+
+

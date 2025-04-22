@@ -42,6 +42,11 @@ func (m *MockedServices) TaskRemove(ctx context.Context, id uint64) error {
 	return args.Error(0)
 }
 
+func (m *MockedServices) TaskUpdate(ctx context.Context, task entities.Task) error {
+	args := m.Called(ctx, task)
+	return args.Error(0)
+}
+
 func TestTaskListHandler(t *testing.T) {
 
 	t.Run("success request", func(t *testing.T) {
@@ -409,6 +414,163 @@ func TestTaskRemoveHandler(t *testing.T) {
 		app.Delete("/tasks/:id", h.RemoveHandler)
 
 		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/tasks/%d", taskId), nil)
+
+		resp, err := app.Test(req)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+
+		s.AssertExpectations(t)
+	})
+}
+
+func TestTaskUpdateHandler(t *testing.T) {
+	t.Run("success request", func(t *testing.T) {
+		var taskId uint64
+		taskId = 1
+
+		taskDTO := handlers.TaskJSON{
+			Name:        "Test task",
+			Description: "test task description",
+		}
+
+		s := new(MockedServices)
+		h := &handlers.TasksHandler{
+			Service: s,
+		}
+
+		body, err := json.Marshal(taskDTO)
+		assert.NoError(t, err)
+
+		task := entities.Task{
+			ID:          taskId,
+			Name:        taskDTO.Name,
+			Description: taskDTO.Description,
+		}
+
+		s.On("TaskUpdate", mock.Anything, task).Return(nil)
+
+		app := fiber.New()
+		app.Put("/tasks/:id", h.UpdateHandler)
+
+		req := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/tasks/%d", taskId), bytes.NewReader(body))
+		defer req.Body.Close()
+		resp, err := app.Test(req)
+
+		assert.NoError(t, err)
+		assert.Equal(t, fiber.StatusNoContent, resp.StatusCode)
+
+		s.AssertExpectations(t)
+	})
+
+	t.Run("invalid id format (not uint64)", func(t *testing.T) {
+		s := new(MockedServices)
+		h := &handlers.TasksHandler{
+			Service: s,
+		}
+		app := fiber.New()
+		app.Put("/tasks/:id", h.UpdateHandler)
+
+		for _, taskId := range []string{"string", "-1", "18446744073709551616"} {
+			req := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/tasks/%s", taskId), nil)
+
+			resp, err := app.Test(req)
+			assert.NoError(t, err)
+			assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+
+			s.AssertNotCalled(t, "TaskUpdate", mock.Anything, taskId)
+			s.AssertExpectations(t)
+		}
+	})
+
+	t.Run("invalid JSON", func(t *testing.T) {
+		taskID := 1
+		s := new(MockedServices)
+		h := &handlers.TasksHandler{
+			Service: s,
+		}
+		app := fiber.New()
+		app.Put("/tasks/:id", h.UpdateHandler)
+
+		req := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/tasks/%d", taskID), bytes.NewReader([]byte("{invalid json}")))
+		defer req.Body.Close()
+
+		resp, err := app.Test(req)
+
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+
+		s.AssertNotCalled(t, "TaskUpdate", mock.Anything, mock.Anything)
+		s.AssertExpectations(t)
+	})
+
+	t.Run("task not found ", func(t *testing.T) {
+		var taskId uint64
+		taskId = 1
+
+		taskDTO := handlers.TaskJSON{
+			Name:        "Test task",
+			Description: "test task description",
+		}
+
+		body, err := json.Marshal(taskDTO)
+		assert.NoError(t, err)
+
+		task := entities.Task{
+			ID:          taskId,
+			Name:        taskDTO.Name,
+			Description: taskDTO.Description,
+		}
+
+		s := new(MockedServices)
+		h := &handlers.TasksHandler{
+			Service: s,
+		}
+
+		app := fiber.New()
+		app.Put("/tasks/:id", h.UpdateHandler)
+
+		s.On("TaskUpdate", mock.Anything, task).Return(entities.ErrNoTask)
+
+		req := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/tasks/%d", taskId), bytes.NewReader(body))
+		defer req.Body.Close()
+
+		resp, err := app.Test(req)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusNotFound, resp.StatusCode)
+
+		s.AssertExpectations(t)
+	})
+
+	t.Run("internal server error", func(t *testing.T) {
+		var taskId uint64
+		taskId = 1
+
+		taskDTO := handlers.TaskJSON{
+			Name:        "Test task",
+			Description: "test task description",
+		}
+
+		body, err := json.Marshal(taskDTO)
+		assert.NoError(t, err)
+
+		task := entities.Task{
+			ID:          taskId,
+			Name:        taskDTO.Name,
+			Description: taskDTO.Description,
+		}
+
+		s := new(MockedServices)
+		h := &handlers.TasksHandler{
+			Service: s,
+		}
+
+		app := fiber.New()
+		app.Put("/tasks/:id", h.UpdateHandler)
+
+		s.On("TaskUpdate", mock.Anything, task).Return(fmt.Errorf("error"))
+
+		req := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/tasks/%d", taskId), bytes.NewReader(body))
+		defer req.Body.Close()
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
