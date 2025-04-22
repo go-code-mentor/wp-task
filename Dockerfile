@@ -6,7 +6,7 @@ WORKDIR /opt/app
 
 RUN curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b ./bin v2.0.2
 
-# RUN ./bin/golangci-lint run
+RUN ./bin/golangci-lint run
 RUN go test ./... -v
 RUN rm -rfv ./bin/*
 RUN CGO_ENABLED=0 go build -o bin/work_planner ./cmd/app/main.go
