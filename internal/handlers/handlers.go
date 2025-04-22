@@ -4,15 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
 
 	"github.com/go-code-mentor/wp-task/internal/entities"
-	"io"
-	"net/http"
-	"strings"
 )
 
 type Service interface {
@@ -57,73 +53,40 @@ func (h *TasksHandler) ListHandler(c *fiber.Ctx) error {
 	return c.JSON(tasks)
 }
 
-func (h *TasksHandler) AddHandler(w http.ResponseWriter, r *http.Request) {
-	// Check HTTP Method
-	if r.Method != http.MethodPost {
-		ErrMethodNotAllowed(w, r)
-		return
-	}
-
-	// Read request body.
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("unable to read request body: %v", err), http.StatusBadRequest)
-		return
-	}
-
-	//Parse JSON to DTO
+func (h *TasksHandler) AddHandler(c *fiber.Ctx) error {
+	//Read body and parse JSON to DTO
 	var task entities.Task
-	err = json.Unmarshal(body, &task)
+	err := json.Unmarshal(c.Body(), &task)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("unable to unmarshal JSON request body: %v", err), http.StatusBadRequest)
-		return
+		return fiber.ErrBadRequest
 	}
 
-	//Add task to service
-	err = h.Service.TaskAdd(r.Context(), task)
+	//Add task with service
+	err = h.Service.TaskAdd(c.Context(), task)
 	if err != nil {
-		ErrInternalServerError(w, r, err.Error())
-		return
+		return fiber.ErrInternalServerError
 	}
 
-	w.WriteHeader(http.StatusOK)
-
+	return c.SendStatus(fiber.StatusCreated)
 }
 
-func (h *TasksHandler) RemoveHandler(w http.ResponseWriter, r *http.Request) {
-	// Check HTTP Method
-	if r.Method != http.MethodDelete {
-		ErrMethodNotAllowed(w, r)
-		return
-	}
-
-	// Fetching id value
-	parts := strings.Split(r.URL.Path, "/")
-	urlId := parts[len(parts)-1]
-
-	//Convert it to uint64
-	id, err := strconv.ParseUint(urlId, 10, 64)
+func (h *TasksHandler) RemoveHandler(c *fiber.Ctx) error {
+	//Fetching task id from url
+	taskId, err := strconv.ParseUint(c.Params("id"), 10, 64)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Failed to parse id: %v", err), http.StatusBadRequest)
-		return
+		return fiber.ErrBadRequest
 	}
 
-	//Delete task from service
-	err = h.Service.TaskRemove(r.Context(), id)
-
-	// If task not exist
+	//Removing task with service
+	err = h.Service.TaskRemove(c.Context(), taskId)
 	if errors.Is(err, entities.ErrNoTask) {
-		http.Error(w, entities.ErrNoTask.Error(), http.StatusNotFound)
-		return
+		return fiber.ErrNotFound
 	}
-	// Other errors
 	if err != nil {
-		ErrInternalServerError(w, r, http.StatusText(http.StatusNotFound))
-		return
+		return fiber.ErrInternalServerError
 	}
 
-	w.WriteHeader(http.StatusOK)
-
+	return nil
 }
 
 func (h *TasksHandler) UpdateHandler(c *fiber.Ctx) error {
@@ -159,14 +122,4 @@ func (h *TasksHandler) UpdateHandler(c *fiber.Ctx) error {
 	return c.SendStatus(fiber.StatusNoContent)
 }
 
-func ErrMethodNotAllowed(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, fmt.Sprintf("Method %s not allowed", r.Method), http.StatusMethodNotAllowed)
-}
 
-func ErrInternalServerError(w http.ResponseWriter, r *http.Request, err string) {
-	_ = r
-	if err == "" {
-		err = "Internal server error"
-	}
-	http.Error(w, err, http.StatusInternalServerError)
-}
