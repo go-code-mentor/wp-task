@@ -12,7 +12,7 @@ RUN rm -rfv ./bin/*
 
 RUN CGO_ENABLED=0 go build -o bin/work_planner ./cmd/app/main.go
 
-FROM golang:1.24.1-alpine
+FROM alpine:3.21
 
 ARG TZ="Europe/Moscow"
 ARG USER="work_planner"
