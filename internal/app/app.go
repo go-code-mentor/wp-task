@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/log"
 	"github.com/jackc/pgx/v5"
 
 	"github.com/go-code-mentor/wp-task/internal/handlers"
@@ -47,7 +48,12 @@ func (a *App) Build() error {
 }
 
 func (a *App) Run() error {
-	defer a.conn.Close(context.Background())
+	defer func() {
+		err := a.conn.Close(context.Background())
+		if err != nil {
+			log.Errorf("failed to close connection: %s", err)
+		}
+	}()
 	return a.server.Listen(":3000")
 }
 
