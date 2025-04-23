@@ -17,3 +17,9 @@ run:
 
 air:
 	air
+
+migrate_up:
+	go run cmd/migrations/main.go up
+
+migrate_down:
+	go run cmd/migrations/main.go down

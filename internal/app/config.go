@@ -20,6 +20,10 @@ type Config struct {
 	pg_uri string
 }
 
+func (c *Config) ConnString() string {
+	return c.pg_uri
+}
+
 type ConfigDatabase struct {
 	Port     string `yaml:"port" env:"POSTGRES_PORT" env-default:"5432"`
 	Host     string `yaml:"host" env:"POSTGRES_HOST" env-default:"localhost"`
@@ -35,7 +39,9 @@ func (c *Config) parseDb() error {
 		return err
 	}
 
-	c.pg_uri = fmt.Sprintf("postgresql://%s:%s@%s:%s/%s", cfg.User, cfg.Password, cfg.Host, cfg.Port, cfg.Name)
+	c.pg_uri = fmt.Sprintf(
+		"postgresql://%s:%s@%s:%s/%s?sslmode=disable&search_path=public",
+		cfg.User, cfg.Password, cfg.Host, cfg.Port, cfg.Name)
 
 	return nil
 }
