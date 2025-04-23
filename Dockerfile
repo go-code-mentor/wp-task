@@ -6,7 +6,7 @@ WORKDIR /opt/app
 
 RUN curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b ./lint v2.0.2
 RUN ./lint/golangci-lint run
-RUN go test ./... -v
+RUN go test ./... -v -race
 RUN CGO_ENABLED=0 go build -o bin/work_planner ./cmd/app/main.go
 
 FROM alpine:3.21

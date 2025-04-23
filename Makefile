@@ -10,7 +10,7 @@ lint:
 	./bin/golangci-lint run
 
 test:
-	go test ./... -v
+	go test ./... -v -race
 
 run:
 	go run cmd/app/main.go
