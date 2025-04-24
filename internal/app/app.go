@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"fmt"
+	"github.com/go-code-mentor/wp-task/internal/storage"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
@@ -32,7 +33,8 @@ func (a *App) Build() error {
 
 	a.server = fiber.New()
 
-	appService := service.New(&service.FakeStorage{})
+	appStorage := storage.New(a.conn)
+	appService := service.New(appStorage)
 	tasksHandler := handlers.TasksHandler{Service: appService}
 
 	api := a.server.Group("/api")

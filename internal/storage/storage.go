@@ -10,6 +10,12 @@ type Storage struct {
 	pool *pgx.Conn
 }
 
+func New(pool *pgx.Conn) *Storage {
+	return &Storage{
+		pool: pool,
+	}
+}
+
 func (s *Storage) Task(ctx context.Context, id uint64) (entities.Task, error) {
 	return entities.Task{}, nil
 }
