@@ -46,7 +46,7 @@ func (s *Storage) Tasks(ctx context.Context) ([]entities.Task, error) {
 	tasksSQL := make([]TaskSQL, 0)
 	tasksSQL, err = pgx.CollectRows(rows, pgx.RowToStructByName[TaskSQL])
 	if err != nil {
-		return nil, fmt.Errorf("unbale to get query tasks from storage: %w", err)
+		return nil, fmt.Errorf("unbale to get parse rows to DTO: %w", err)
 	}
 
 	// Convert DTO to entity
