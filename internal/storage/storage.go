@@ -10,13 +10,17 @@ import (
 
 const rowsRetrieveTimeout = 10 * time.Second
 
+type PgxConn interface {
+	Query(ctx context.Context, sql string, args ...interface{}) (pgx.Rows, error)
+}
+
 type Storage struct {
-	conn *pgx.Conn
+	Conn PgxConn
 }
 
 func New(conn *pgx.Conn) *Storage {
 	return &Storage{
-		conn: conn,
+		Conn: conn,
 	}
 }
 
@@ -37,7 +41,7 @@ func (s *Storage) Tasks(ctx context.Context) ([]entities.Task, error) {
 
 	// Run SQL query
 	query := `SELECT id, name, description FROM tasks`
-	rows, err := s.conn.Query(c, query)
+	rows, err := s.Conn.Query(c, query)
 	if err != nil {
 		return nil, fmt.Errorf("unbale to get query tasks from storage: %w", err)
 	}
