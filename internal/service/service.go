@@ -7,26 +7,8 @@ import (
 	"github.com/go-code-mentor/wp-task/internal/entities"
 )
 
-type FakeStorage map[uint64]entities.Task
-
-func (s *FakeStorage) Task(ctx context.Context, id uint64) (entities.Task, error) {
-	return entities.Task{}, nil
-}
-
-func (s *FakeStorage) Tasks(ctx context.Context) ([]entities.Task, error) {
-	return []entities.Task{}, nil
-}
-
-func (s *FakeStorage) TaskRemove(ctx context.Context, id uint64) error {
-	return nil
-}
-
-func (s *FakeStorage) TaskUpdate(ctx context.Context, task entities.Task) error {
-	return nil
-}
-
-func (s *FakeStorage) TaskAdd(ctx context.Context, task entities.Task) error {
-	return nil
+type Storage interface {
+	TaskStorage
 }
 
 type TaskStorage interface {
@@ -37,14 +19,14 @@ type TaskStorage interface {
 	TaskAdd(ctx context.Context, task entities.Task) error
 }
 
-func New(storage TaskStorage) *Service {
+func New(storage Storage) *Service {
 	return &Service{
 		Storage: storage,
 	}
 }
 
 type Service struct {
-	Storage TaskStorage
+	Storage Storage
 }
 
 func (s *Service) Task(ctx context.Context, id uint64) (entities.Task, error) {
