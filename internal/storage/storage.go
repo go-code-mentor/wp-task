@@ -52,11 +52,11 @@ func (s *Storage) Tasks(ctx context.Context) ([]entities.Task, error) {
 	// Convert DTO to entity
 	tasks := make([]entities.Task, len(tasksSQL))
 	for i := range tasksSQL {
-		tasks = append(tasks, entities.Task{
+		tasks[i] = entities.Task{
 			ID:          tasksSQL[i].ID,
 			Name:        tasksSQL[i].Name,
 			Description: tasksSQL[i].Description,
-		})
+		}
 	}
 
 	return tasks, nil
