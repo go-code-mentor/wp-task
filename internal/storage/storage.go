@@ -47,7 +47,7 @@ func (s *Storage) Tasks(ctx context.Context) ([]entities.Task, error) {
 	}
 
 	// Parse SQL query to DTO
-	tasksSQL := make([]TaskSQL, 0)
+	var tasksSQL []TaskSQL
 	tasksSQL, err = pgx.CollectRows(rows, pgx.RowToStructByName[TaskSQL])
 	if err != nil {
 		return nil, fmt.Errorf("unbale to get parse rows to DTO: %w", err)
