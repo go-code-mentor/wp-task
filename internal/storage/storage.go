@@ -38,6 +38,7 @@ func (s *Storage) Tasks(ctx context.Context) ([]entities.Task, error) {
 	// Run SQL query
 	query := `SELECT id, name, description FROM tasks`
 	rows, err := s.Conn.Query(c, query)
+	defer rows.Close()
 	if err != nil {
 		return nil, fmt.Errorf("unbale to get query tasks from storage: %w", err)
 	}
