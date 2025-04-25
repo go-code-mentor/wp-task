@@ -10,12 +10,8 @@ import (
 
 const rowsRetrieveTimeout = 10 * time.Second
 
-type PgxConn interface {
-	Query(ctx context.Context, sql string, args ...interface{}) (pgx.Rows, error)
-}
-
 type Storage struct {
-	Conn PgxConn
+	Conn *pgx.Conn
 }
 
 func New(conn *pgx.Conn) *Storage {
