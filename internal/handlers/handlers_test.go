@@ -425,8 +425,7 @@ func TestTaskRemoveHandler(t *testing.T) {
 
 func TestTaskUpdateHandler(t *testing.T) {
 	t.Run("success request", func(t *testing.T) {
-		var taskId uint64
-		taskId = 1
+		taskId := uint64(1)
 
 		taskDTO := handlers.TaskJSON{
 			Name:        "Test task",
@@ -453,7 +452,11 @@ func TestTaskUpdateHandler(t *testing.T) {
 		app.Put("/tasks/:id", h.UpdateHandler)
 
 		req := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/tasks/%d", taskId), bytes.NewReader(body))
-		defer req.Body.Close()
+		defer func() {
+			if err := req.Body.Close(); err != nil {
+				fmt.Printf("Unable to close request body: %v", err)
+			}
+		}()
 		resp, err := app.Test(req)
 
 		assert.NoError(t, err)
@@ -492,7 +495,11 @@ func TestTaskUpdateHandler(t *testing.T) {
 		app.Put("/tasks/:id", h.UpdateHandler)
 
 		req := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/tasks/%d", taskID), bytes.NewReader([]byte("{invalid json}")))
-		defer req.Body.Close()
+		defer func() {
+			if err := req.Body.Close(); err != nil {
+				fmt.Printf("Unable to close request body: %v", err)
+			}
+		}()
 
 		resp, err := app.Test(req)
 
@@ -504,8 +511,7 @@ func TestTaskUpdateHandler(t *testing.T) {
 	})
 
 	t.Run("task not found ", func(t *testing.T) {
-		var taskId uint64
-		taskId = 1
+		taskId := uint64(1)
 
 		taskDTO := handlers.TaskJSON{
 			Name:        "Test task",
@@ -532,7 +538,11 @@ func TestTaskUpdateHandler(t *testing.T) {
 		s.On("TaskUpdate", mock.Anything, task).Return(entities.ErrNoTask)
 
 		req := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/tasks/%d", taskId), bytes.NewReader(body))
-		defer req.Body.Close()
+		defer func() {
+			if err := req.Body.Close(); err != nil {
+				fmt.Printf("Unable to close request body: %v", err)
+			}
+		}()
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
@@ -542,8 +552,7 @@ func TestTaskUpdateHandler(t *testing.T) {
 	})
 
 	t.Run("internal server error", func(t *testing.T) {
-		var taskId uint64
-		taskId = 1
+		taskId := uint64(1)
 
 		taskDTO := handlers.TaskJSON{
 			Name:        "Test task",
@@ -570,7 +579,11 @@ func TestTaskUpdateHandler(t *testing.T) {
 		s.On("TaskUpdate", mock.Anything, task).Return(fmt.Errorf("error"))
 
 		req := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/tasks/%d", taskId), bytes.NewReader(body))
-		defer req.Body.Close()
+		defer func() {
+			if err := req.Body.Close(); err != nil {
+				fmt.Printf("Unable to close request body: %v", err)
+			}
+		}()
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
