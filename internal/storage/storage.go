@@ -80,8 +80,8 @@ func (s *Storage) TaskUpdate(ctx context.Context, task entities.Task) error {
 	}
 
 	// Run SQL query
-	query := `UPDATE tasks SET name = $1,description = $2, updated_at = $3 WHERE id = $4`
-	_, err := s.conn.Exec(c, query, taskSQL.Name, taskSQL.Description, time.Now().UTC(), taskSQL.ID)
+	query := `UPDATE tasks SET name = $1,description = $2, updated_at = now() WHERE id = $3`
+	_, err := s.conn.Exec(c, query, taskSQL.Name, taskSQL.Description, taskSQL.ID)
 	if err != nil {
 		return fmt.Errorf("unable to update task in storage: %w", err)
 	}
