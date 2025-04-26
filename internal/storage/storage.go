@@ -27,7 +27,26 @@ type TaskSQL struct {
 }
 
 func (s *Storage) Task(ctx context.Context, id uint64) (entities.Task, error) {
-	return entities.Task{}, nil
+	// Create context with timeout for SQL query
+	c, cancel := context.WithTimeout(ctx, rowsRetrieveTimeout)
+	defer cancel()
+
+	var taskSQL TaskSQL
+
+	// Run SQL query
+	query := `SELECT id, name, description FROM tasks WHERE id=$1`
+	err := s.conn.QueryRow(c, query, id).Scan(&taskSQL)
+	if err != nil {
+		return entities.Task{}, fmt.Errorf("unable to get query task from storage: %w", err)
+	}
+
+	// Convert DTO to entity
+	task := entities.Task{
+		ID:          taskSQL.ID,
+		Name:        taskSQL.Name,
+		Description: taskSQL.Description,
+	}
+	return task, nil
 }
 
 func (s *Storage) Tasks(ctx context.Context) ([]entities.Task, error) {
@@ -39,7 +58,7 @@ func (s *Storage) Tasks(ctx context.Context) ([]entities.Task, error) {
 	query := `SELECT id, name, description FROM tasks`
 	rows, err := s.conn.Query(c, query)
 	if err != nil {
-		return nil, fmt.Errorf("unbale to get query tasks from storage: %w", err)
+		return nil, fmt.Errorf("unable to get query tasks from storage: %w", err)
 	}
 	defer rows.Close()
 
@@ -47,7 +66,7 @@ func (s *Storage) Tasks(ctx context.Context) ([]entities.Task, error) {
 	var tasksSQL []TaskSQL
 	tasksSQL, err = pgx.CollectRows(rows, pgx.RowToStructByName[TaskSQL])
 	if err != nil {
-		return nil, fmt.Errorf("unbale to get parse rows to DTO: %w", err)
+		return nil, fmt.Errorf("unable to get parse rows to DTO: %w", err)
 	}
 
 	// Convert DTO to entity
