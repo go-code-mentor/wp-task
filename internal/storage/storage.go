@@ -83,6 +83,17 @@ func (s *Storage) Tasks(ctx context.Context) ([]entities.Task, error) {
 }
 
 func (s *Storage) TaskRemove(ctx context.Context, id uint64) error {
+	// Create context with timeout for SQL query
+	c, cancel := context.WithTimeout(ctx, rowsRetrieveTimeout)
+	defer cancel()
+
+	// Run SQL query
+	query := `DELETE FROM tasks WHERE id=$1`
+	_, err := s.conn.Exec(c, query, id)
+	if err != nil {
+		return fmt.Errorf("unbale to remove task from storage: %w", err)
+	}
+
 	return nil
 }
 
