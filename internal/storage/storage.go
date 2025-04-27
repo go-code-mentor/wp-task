@@ -71,7 +71,7 @@ func (s *Storage) TaskUpdate(ctx context.Context, task entities.Task) error {
 	return nil
 }
 
-func (s *Storage) TaskAdd(ctx context.Context, task entities.Task) error {
+func (s *Storage) TaskAdd(ctx context.Context, task entities.Task) (uint64, error) {
 	// Create context with timeout for SQL query
 	c, cancel := context.WithTimeout(ctx, rowsRetrieveTimeout)
 	defer cancel()
@@ -83,11 +83,11 @@ func (s *Storage) TaskAdd(ctx context.Context, task entities.Task) error {
 	}
 
 	// Run SQL query
-	query := "INSERT INTO tasks (name, description) VALUES ($1, $2)"
-	_, err := s.conn.Exec(c, query, taskSQL)
+	query := "INSERT INTO tasks (name, description) VALUES ($1, $2) RETURNING id"
+	err := s.conn.QueryRow(c, query, taskSQL).Scan(&taskSQL)
 	if err != nil {
-		return fmt.Errorf("unable to add task to storage: %w", err)
+		return 0, fmt.Errorf("unable to add task to storage: %w", err)
 	}
 
-	return nil
+	return taskSQL.ID, nil
 }
