@@ -78,7 +78,6 @@ func (s *Storage) TaskAdd(ctx context.Context, task entities.Task) error {
 
 	// Convert entity to DTO
 	taskSQL := TaskSQL{
-		ID:          task.ID,
 		Name:        task.Name,
 		Description: task.Description,
 	}
