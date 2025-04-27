@@ -84,7 +84,7 @@ func (s *Storage) TaskAdd(ctx context.Context, task entities.Task) error {
 
 	// Run SQL query
 	query := "INSERT INTO tasks (name, description) VALUES ($1, $2)"
-	_, err := s.conn.Exec(c, query, taskSQL.Name, taskSQL.Description)
+	_, err := s.conn.Exec(c, query, taskSQL)
 	if err != nil {
 		return fmt.Errorf("unable to add task to storage: %w", err)
 	}
