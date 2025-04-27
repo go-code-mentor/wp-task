@@ -72,16 +72,9 @@ func (s *Storage) TaskUpdate(ctx context.Context, task entities.Task) error {
 	c, cancel := context.WithTimeout(ctx, rowsRetrieveTimeout)
 	defer cancel()
 
-	// Convert entity to DTO
-	taskSQL := TaskSQL{
-		ID:          task.ID,
-		Name:        task.Name,
-		Description: task.Description,
-	}
-
 	// Run SQL query
 	query := `UPDATE tasks SET name = $1,description = $2 WHERE id = $3`
-	_, err := s.conn.Exec(c, query, taskSQL)
+	_, err := s.conn.Exec(c, query, task.Name, task.Description, task.ID)
 	if err != nil {
 		return fmt.Errorf("unable to update task in storage: %w", err)
 	}
