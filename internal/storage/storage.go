@@ -81,13 +81,14 @@ func (s *Storage) TaskAdd(ctx context.Context, task entities.Task) (uint64, erro
 		Name:        task.Name,
 		Description: task.Description,
 	}
+	var taskID int64
 
 	// Run SQL query
 	query := "INSERT INTO tasks (name, description) VALUES ($1, $2) RETURNING id"
-	err := s.conn.QueryRow(c, query, taskSQL.Name, taskSQL.Description).Scan(taskSQL)
+	err := s.conn.QueryRow(c, query, taskSQL.Name, taskSQL.Description).Scan(&taskID)
 	if err != nil {
 		return 0, fmt.Errorf("unable to add task to storage: %w", err)
 	}
 
-	return taskSQL.ID, nil
+	return uint64(taskID), nil
 }
