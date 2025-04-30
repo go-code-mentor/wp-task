@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
@@ -71,6 +72,7 @@ func (h *TasksHandler) AddHandler(c *fiber.Ctx) error {
 	//Add task with service
 	taskJSON.ID, err = h.Service.TaskAdd(c.Context(), task)
 	if err != nil {
+		fmt.Println(err)
 		return fiber.ErrInternalServerError
 	}
 
