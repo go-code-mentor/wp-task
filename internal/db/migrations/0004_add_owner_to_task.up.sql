@@ -1,0 +1,1 @@
+ALTER TABLE tasks ADD COLUMN owner varchar(64) not null default '';

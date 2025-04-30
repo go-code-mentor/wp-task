@@ -3,14 +3,17 @@ package app
 import (
 	"context"
 	"fmt"
-	"github.com/go-code-mentor/wp-task/internal/storage"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
 	"github.com/jackc/pgx/v5"
 
 	"github.com/go-code-mentor/wp-task/internal/handlers"
+	"github.com/go-code-mentor/wp-task/internal/middleware/simpletoken"
 	"github.com/go-code-mentor/wp-task/internal/service"
+	userservice "github.com/go-code-mentor/wp-task/internal/service/users"
+	"github.com/go-code-mentor/wp-task/internal/storage"
+	userstorage "github.com/go-code-mentor/wp-task/internal/storage/users"
 )
 
 func New(cfg Config) *App {
@@ -32,6 +35,11 @@ func (a *App) Build() error {
 	}
 
 	a.server = fiber.New()
+
+	userStorage := userstorage.New(a.conn)
+	userService := userservice.New(userStorage)
+	authMiddleware := simpletoken.AuthMiddleware{Service: userService}
+	a.server.Use(authMiddleware.Auth)
 
 	appStorage := storage.New(a.conn)
 	appService := service.New(appStorage)
