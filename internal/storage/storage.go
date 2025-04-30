@@ -116,6 +116,25 @@ func (s *Storage) TaskUpdate(ctx context.Context, task entities.Task, login stri
 	return nil
 }
 
-func (s *Storage) TaskAdd(ctx context.Context, task entities.Task, login string) error {
-	return nil
+func (s *Storage) TaskAdd(ctx context.Context, task entities.Task, login string) (uint64, error) {
+	// Create context with timeout for SQL query
+	c, cancel := context.WithTimeout(ctx, rowsRetrieveTimeout)
+	defer cancel()
+
+	// Convert entity to DTO
+	taskSQL := TaskSQL{
+		Name:        task.Name,
+		Description: task.Description,
+		Owner:       login,
+	}
+	var taskID int64
+
+	// Run SQL query
+	query := "INSERT INTO tasks (name, description, owner) VALUES ($1, $2, $3) RETURNING id"
+	err := s.conn.QueryRow(c, query, taskSQL.Name, taskSQL.Description, taskSQL.Owner).Scan(&taskID)
+	if err != nil {
+		return 0, fmt.Errorf("unable to add task to storage: %w", err)
+	}
+
+	return uint64(taskID), nil
 }

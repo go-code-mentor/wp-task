@@ -14,7 +14,7 @@ import (
 
 type Service interface {
 	Tasks(ctx context.Context, login string) ([]entities.Task, error)
-	TaskAdd(ctx context.Context, task entities.Task, login string) error
+	TaskAdd(ctx context.Context, task entities.Task, login string) (uint64, error)
 	Task(ctx context.Context, id uint64, login string) (entities.Task, error)
 	TaskRemove(ctx context.Context, id uint64, login string) error
 	TaskUpdate(ctx context.Context, task entities.Task, login string) error
@@ -25,6 +25,7 @@ type TasksHandler struct {
 }
 
 type TaskJSON struct {
+	ID          uint64 `json:"id"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
 }
@@ -69,8 +70,19 @@ func (h *TasksHandler) AddHandler(c *fiber.Ctx) error {
 		return fiber.ErrBadRequest
 	}
 
+	//Convert to DTO
+	taskJSON := TaskJSON{
+		Name:        task.Name,
+		Description: task.Description,
+	}
+
 	//Add task with service
-	err = h.Service.TaskAdd(c.Context(), task, login)
+	taskJSON.ID, err = h.Service.TaskAdd(c.Context(), task, login)
+	if err != nil {
+		return fiber.ErrInternalServerError
+	}
+
+	err = c.JSON(taskJSON.ID)
 	if err != nil {
 		return fiber.ErrInternalServerError
 	}

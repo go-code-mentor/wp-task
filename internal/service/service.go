@@ -16,7 +16,7 @@ type TaskStorage interface {
 	Tasks(ctx context.Context, login string) ([]entities.Task, error)
 	TaskRemove(ctx context.Context, id uint64, login string) error
 	TaskUpdate(ctx context.Context, task entities.Task, login string) error
-	TaskAdd(ctx context.Context, task entities.Task, login string) error
+	TaskAdd(ctx context.Context, task entities.Task, login string) (uint64, error)
 }
 
 func New(storage Storage) *Service {
@@ -61,9 +61,10 @@ func (s *Service) TaskUpdate(ctx context.Context, task entities.Task, login stri
 	return nil
 }
 
-func (s *Service) TaskAdd(ctx context.Context, task entities.Task, login string) error {
-	if err := s.Storage.TaskAdd(ctx, task, login); err != nil {
-		return fmt.Errorf("unable to add task: %w", err)
+func (s *Service) TaskAdd(ctx context.Context, task entities.Task, login string) (uint64, error) {
+	id, err := s.Storage.TaskAdd(ctx, task)
+	if err != nil {
+		return 0, fmt.Errorf("unable to add task: %w", err)
 	}
-	return nil
+	return id, nil
 }
