@@ -32,9 +32,9 @@ func (m *MockedServices) Task(ctx context.Context, taskId uint64) (entities.Task
 	return args.Get(0).(entities.Task), args.Error(1)
 }
 
-func (m *MockedServices) TaskAdd(ctx context.Context, task entities.Task) error {
+func (m *MockedServices) TaskAdd(ctx context.Context, task entities.Task) (uint64, error) {
 	args := m.Called(ctx, task)
-	return args.Error(0)
+	return args.Get(0).(uint64), args.Error(1)
 }
 
 func (m *MockedServices) TaskRemove(ctx context.Context, id uint64) error {
@@ -261,10 +261,10 @@ func TestTaskItemHandler(t *testing.T) {
 func TestTaskAddHandler(t *testing.T) {
 	t.Run("success request", func(t *testing.T) {
 		task := entities.Task{
-			ID:          1,
 			Name:        "Test task",
 			Description: "test task description",
 		}
+		taskID := uint64(1)
 		s := new(MockedServices)
 		h := &handlers.TasksHandler{
 			Service: s,
@@ -273,7 +273,7 @@ func TestTaskAddHandler(t *testing.T) {
 		body, err := json.Marshal(task)
 		assert.NoError(t, err)
 
-		s.On("TaskAdd", mock.Anything, task).Return(nil)
+		s.On("TaskAdd", mock.Anything, task).Return(taskID, nil)
 
 		app := fiber.New()
 		app.Post("/tasks", h.AddHandler)
@@ -307,7 +307,6 @@ func TestTaskAddHandler(t *testing.T) {
 
 	t.Run("internal server error", func(t *testing.T) {
 		task := entities.Task{
-			ID:          1,
 			Name:        "Test task",
 			Description: "test task description",
 		}
@@ -323,7 +322,7 @@ func TestTaskAddHandler(t *testing.T) {
 		app := fiber.New()
 		app.Post("/tasks", h.AddHandler)
 
-		s.On("TaskAdd", mock.Anything, task).Return(fmt.Errorf("error"))
+		s.On("TaskAdd", mock.Anything, task).Return(uint64(0), fmt.Errorf("error"))
 
 		req := httptest.NewRequest(http.MethodPost, "/tasks", bytes.NewReader(body))
 		resp, err := app.Test(req)
