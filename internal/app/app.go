@@ -13,7 +13,6 @@ import (
 	"github.com/go-code-mentor/wp-task/internal/service"
 	userservice "github.com/go-code-mentor/wp-task/internal/service/users"
 	"github.com/go-code-mentor/wp-task/internal/storage"
-	userstorage "github.com/go-code-mentor/wp-task/internal/storage/users"
 )
 
 func New(cfg Config) *App {
@@ -36,12 +35,12 @@ func (a *App) Build() error {
 
 	a.server = fiber.New()
 
-	userStorage := userstorage.New(a.conn)
-	userService := userservice.New(userStorage)
+	appStorage := storage.New(a.conn)
+
+	userService := userservice.New(appStorage)
 	authMiddleware := simpletoken.AuthMiddleware{Service: userService}
 	a.server.Use(authMiddleware.Auth)
 
-	appStorage := storage.New(a.conn)
 	appService := service.New(appStorage)
 	tasksHandler := handlers.TasksHandler{Service: appService}
 

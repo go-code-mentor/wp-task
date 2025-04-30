@@ -1,26 +1,11 @@
-package users
+package storage
 
 import (
 	"context"
 	"fmt"
-	"time"
-
-	"github.com/jackc/pgx/v5"
 )
 
-const rowsRetrieveTimeout = 10 * time.Second
-
-type UserStorage struct {
-	conn *pgx.Conn
-}
-
-func New(conn *pgx.Conn) *UserStorage {
-	return &UserStorage{
-		conn: conn,
-	}
-}
-
-func (s *UserStorage) GetUserLogin(ctx context.Context, token string) (string, error) {
+func (s *Storage) GetUserLogin(ctx context.Context, token string) (string, error) {
 
 	c, cancel := context.WithTimeout(ctx, rowsRetrieveTimeout)
 	defer cancel()
