@@ -6,7 +6,7 @@ import (
 )
 
 type UserStorage interface {
-	Auth(ctx context.Context, token string) (string, error)
+	GetUserLogin(ctx context.Context, token string) (string, error)
 }
 
 func New(storage UserStorage) *UserService {
@@ -19,8 +19,8 @@ type UserService struct {
 	Storage UserStorage
 }
 
-func (s *UserService) Auth(ctx context.Context, token string) (string, error) {
-	login, err := s.Storage.Auth(ctx, token)
+func (s *UserService) GetUserLogin(ctx context.Context, token string) (string, error) {
+	login, err := s.Storage.GetUserLogin(ctx, token)
 	if err != nil {
 		return login, fmt.Errorf("could not auth user: %w", err)
 	}

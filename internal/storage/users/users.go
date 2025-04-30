@@ -20,7 +20,7 @@ func New(conn *pgx.Conn) *UserStorage {
 	}
 }
 
-func (s *UserStorage) Auth(ctx context.Context, token string) (string, error) {
+func (s *UserStorage) GetUserLogin(ctx context.Context, token string) (string, error) {
 
 	c, cancel := context.WithTimeout(ctx, rowsRetrieveTimeout)
 	defer cancel()

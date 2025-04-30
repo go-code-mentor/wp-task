@@ -12,7 +12,7 @@ const (
 )
 
 type AuthService interface {
-	Auth(ctx context.Context, token string) (string, error)
+	GetUserLogin(ctx context.Context, token string) (string, error)
 }
 
 type AuthMiddleware struct {
@@ -21,13 +21,13 @@ type AuthMiddleware struct {
 
 func (m *AuthMiddleware) Auth(c *fiber.Ctx) error {
 
-	token := c.Get(fiber.HeaderAuthorization, "")
+	token := c.Get(AuthHeader, "")
 
 	if len(token) == 0 {
 		return fiber.ErrUnauthorized
 	}
 
-	userLogin, err := m.Service.Auth(c.Context(), token)
+	userLogin, err := m.Service.GetUserLogin(c.Context(), token)
 	if err != nil {
 		return fiber.ErrUnauthorized
 	}
