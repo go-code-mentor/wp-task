@@ -62,7 +62,7 @@ func (s *Service) TaskUpdate(ctx context.Context, task entities.Task, login stri
 }
 
 func (s *Service) TaskAdd(ctx context.Context, task entities.Task, login string) (uint64, error) {
-	id, err := s.Storage.TaskAdd(ctx, task)
+	id, err := s.Storage.TaskAdd(ctx, task, login)
 	if err != nil {
 		return 0, fmt.Errorf("unable to add task: %w", err)
 	}

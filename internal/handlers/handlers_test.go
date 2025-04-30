@@ -22,28 +22,28 @@ type MockedServices struct {
 	mock.Mock
 }
 
-func (m *MockedServices) Tasks(ctx context.Context) ([]entities.Task, error) {
-	args := m.Called(ctx)
+func (m *MockedServices) Tasks(ctx context.Context, login string) ([]entities.Task, error) {
+	args := m.Called(ctx, login)
 	return args.Get(0).([]entities.Task), args.Error(1)
 }
 
-func (m *MockedServices) Task(ctx context.Context, taskId uint64) (entities.Task, error) {
-	args := m.Called(ctx, taskId)
+func (m *MockedServices) Task(ctx context.Context, taskId uint64, login string) (entities.Task, error) {
+	args := m.Called(ctx, taskId, login)
 	return args.Get(0).(entities.Task), args.Error(1)
 }
 
-func (m *MockedServices) TaskAdd(ctx context.Context, task entities.Task) (uint64, error) {
-	args := m.Called(ctx, task)
+func (m *MockedServices) TaskAdd(ctx context.Context, task entities.Task, login string) (uint64, error) {
+	args := m.Called(ctx, task, login)
 	return args.Get(0).(uint64), args.Error(1)
 }
 
-func (m *MockedServices) TaskRemove(ctx context.Context, id uint64) error {
-	args := m.Called(ctx, id)
+func (m *MockedServices) TaskRemove(ctx context.Context, id uint64, login string) error {
+	args := m.Called(ctx, id, login)
 	return args.Error(0)
 }
 
-func (m *MockedServices) TaskUpdate(ctx context.Context, task entities.Task) error {
-	args := m.Called(ctx, task)
+func (m *MockedServices) TaskUpdate(ctx context.Context, task entities.Task, login string) error {
+	args := m.Called(ctx, task, login)
 	return args.Error(0)
 }
 
@@ -55,13 +55,14 @@ func TestTaskListHandler(t *testing.T) {
 			ID:          5,
 			Name:        "test task",
 			Description: "test desc",
+			Owner:       "user",
 		}
 
 		s := new(MockedServices)
 		h := &handlers.TasksHandler{
 			Service: s,
 		}
-		s.On("Tasks", mock.Anything).Return([]entities.Task{task}, nil)
+		s.On("Tasks", mock.Anything, task.Owner).Return([]entities.Task{task}, nil)
 
 		app := fiber.New()
 		app.Get("/tasks", h.ListHandler)
