@@ -12,11 +12,11 @@ import (
 )
 
 type Service interface {
-	Tasks(ctx context.Context) ([]entities.Task, error)
-	TaskAdd(ctx context.Context, task entities.Task) (uint64, error)
-	Task(ctx context.Context, id uint64) (entities.Task, error)
-	TaskRemove(ctx context.Context, id uint64) error
-	TaskUpdate(ctx context.Context, task entities.Task) error
+	Tasks(ctx context.Context, login string) ([]entities.Task, error)
+	TaskAdd(ctx context.Context, task entities.Task, login string) (uint64, error)
+	Task(ctx context.Context, id uint64, login string) (entities.Task, error)
+	TaskRemove(ctx context.Context, id uint64, login string) error
+	TaskUpdate(ctx context.Context, task entities.Task, login string) error
 }
 
 type TasksHandler struct {
@@ -31,12 +31,17 @@ type TaskJSON struct {
 
 func (h *TasksHandler) ItemHandler(c *fiber.Ctx) error {
 
+	login, ok := c.Locals(entities.UserLoginKey).(string)
+	if !ok {
+		return fiber.ErrUnauthorized
+	}
+
 	taskId, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
 		return fiber.ErrNotFound
 	}
 
-	task, err := h.Service.Task(c.Context(), uint64(taskId))
+	task, err := h.Service.Task(c.Context(), uint64(taskId), login)
 	if err != nil {
 		return fiber.ErrNotFound
 	}
@@ -46,7 +51,12 @@ func (h *TasksHandler) ItemHandler(c *fiber.Ctx) error {
 
 func (h *TasksHandler) ListHandler(c *fiber.Ctx) error {
 
-	tasks, err := h.Service.Tasks(c.Context())
+	login, ok := c.Locals(entities.UserLoginKey).(string)
+	if !ok {
+		return fiber.ErrUnauthorized
+	}
+
+	tasks, err := h.Service.Tasks(c.Context(), login)
 	if err != nil {
 		return fiber.ErrInternalServerError
 	}
@@ -55,6 +65,12 @@ func (h *TasksHandler) ListHandler(c *fiber.Ctx) error {
 }
 
 func (h *TasksHandler) AddHandler(c *fiber.Ctx) error {
+
+	login, ok := c.Locals(entities.UserLoginKey).(string)
+	if !ok {
+		return fiber.ErrUnauthorized
+	}
+
 	//Read body and parse JSON to DTO
 	var task entities.Task
 	err := json.Unmarshal(c.Body(), &task)
@@ -69,7 +85,7 @@ func (h *TasksHandler) AddHandler(c *fiber.Ctx) error {
 	}
 
 	//Add task with service
-	taskJSON.ID, err = h.Service.TaskAdd(c.Context(), task)
+	taskJSON.ID, err = h.Service.TaskAdd(c.Context(), task, login)
 	if err != nil {
 		return fiber.ErrInternalServerError
 	}
@@ -83,6 +99,12 @@ func (h *TasksHandler) AddHandler(c *fiber.Ctx) error {
 }
 
 func (h *TasksHandler) RemoveHandler(c *fiber.Ctx) error {
+
+	login, ok := c.Locals(entities.UserLoginKey).(string)
+	if !ok {
+		return fiber.ErrUnauthorized
+	}
+
 	//Fetching task id from url
 	taskId, err := strconv.ParseUint(c.Params("id"), 10, 64)
 	if err != nil {
@@ -90,7 +112,7 @@ func (h *TasksHandler) RemoveHandler(c *fiber.Ctx) error {
 	}
 
 	//Removing task with service
-	err = h.Service.TaskRemove(c.Context(), taskId)
+	err = h.Service.TaskRemove(c.Context(), taskId, login)
 	if errors.Is(err, entities.ErrNoTask) {
 		return fiber.ErrNotFound
 	}
@@ -102,6 +124,11 @@ func (h *TasksHandler) RemoveHandler(c *fiber.Ctx) error {
 }
 
 func (h *TasksHandler) UpdateHandler(c *fiber.Ctx) error {
+
+	login, ok := c.Locals(entities.UserLoginKey).(string)
+	if !ok {
+		return fiber.ErrUnauthorized
+	}
 
 	taskId, err := strconv.ParseUint(c.Params("id"), 10, 64)
 	if err != nil {
@@ -123,7 +150,7 @@ func (h *TasksHandler) UpdateHandler(c *fiber.Ctx) error {
 	}
 
 	//Update task in service
-	err = h.Service.TaskUpdate(c.Context(), task)
+	err = h.Service.TaskUpdate(c.Context(), task, login)
 	if errors.Is(err, entities.ErrNoTask) {
 		return fiber.ErrNotFound
 	}
