@@ -65,6 +65,10 @@ func TestTaskListHandler(t *testing.T) {
 		s.On("Tasks", mock.Anything, task.Owner).Return([]entities.Task{task}, nil)
 
 		app := fiber.New()
+		app.Use(func(c *fiber.Ctx) error {
+			c.Locals(entities.UserLoginKey, task.Owner)
+			return c.Next()
+		})
 		app.Get("/tasks", h.ListHandler)
 
 		req := httptest.NewRequest(http.MethodGet, "/tasks", nil)
@@ -123,13 +127,18 @@ func TestTaskListHandler(t *testing.T) {
 
 	t.Run("internal server error", func(t *testing.T) {
 
+		login := "user"
 		s := new(MockedServices)
 		h := &handlers.TasksHandler{
 			Service: s,
 		}
-		s.On("Tasks", mock.Anything).Return([]entities.Task{}, fmt.Errorf("error"))
+		s.On("Tasks", mock.Anything, login).Return([]entities.Task{}, fmt.Errorf("error"))
 
 		app := fiber.New()
+		app.Use(func(c *fiber.Ctx) error {
+			c.Locals(entities.UserLoginKey, login)
+			return c.Next()
+		})
 		app.Get("/tasks", h.ListHandler)
 
 		req := httptest.NewRequest(http.MethodGet, "/tasks", nil)
@@ -150,15 +159,20 @@ func TestTaskItemHandler(t *testing.T) {
 			ID:          5,
 			Name:        "test task",
 			Description: "test desc",
+			Owner:       "user",
 		}
 
 		s := new(MockedServices)
 		h := &handlers.TasksHandler{
 			Service: s,
 		}
-		s.On("Task", mock.Anything, task.ID).Return(task, nil)
+		s.On("Task", mock.Anything, task.ID, task.Owner).Return(task, nil)
 
 		app := fiber.New()
+		app.Use(func(c *fiber.Ctx) error {
+			c.Locals(entities.UserLoginKey, task.Owner)
+			return c.Next()
+		})
 		app.Get("/tasks/:id", h.ItemHandler)
 
 		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/tasks/%d", task.ID), nil)
@@ -217,6 +231,7 @@ func TestTaskItemHandler(t *testing.T) {
 	t.Run("error not found - wrong type of task id", func(t *testing.T) {
 
 		taskId := "abc"
+		login := "user"
 
 		s := new(MockedServices)
 		h := &handlers.TasksHandler{
@@ -224,6 +239,10 @@ func TestTaskItemHandler(t *testing.T) {
 		}
 
 		app := fiber.New()
+		app.Use(func(c *fiber.Ctx) error {
+			c.Locals(entities.UserLoginKey, login)
+			return c.Next()
+		})
 		app.Get("/tasks/:id", h.ItemHandler)
 
 		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/tasks/%s", taskId), nil)
@@ -232,21 +251,26 @@ func TestTaskItemHandler(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, http.StatusNotFound, resp.StatusCode)
 
-		s.AssertNotCalled(t, "Task", mock.Anything, taskId)
+		s.AssertNotCalled(t, "Task", mock.Anything, taskId, login)
 		s.AssertExpectations(t)
 	})
 
 	t.Run("error not found - task not exists in storage", func(t *testing.T) {
 
 		taskId := uint64(1)
+		login := "user"
 
 		s := new(MockedServices)
 		h := &handlers.TasksHandler{
 			Service: s,
 		}
-		s.On("Task", mock.Anything, taskId).Return(entities.Task{}, fmt.Errorf("error"))
+		s.On("Task", mock.Anything, taskId, login).Return(entities.Task{}, fmt.Errorf("error"))
 
 		app := fiber.New()
+		app.Use(func(c *fiber.Ctx) error {
+			c.Locals(entities.UserLoginKey, login)
+			return c.Next()
+		})
 		app.Get("/tasks/:id", h.ItemHandler)
 
 		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/tasks/%d", taskId), nil)
@@ -264,6 +288,7 @@ func TestTaskAddHandler(t *testing.T) {
 		task := entities.Task{
 			Name:        "Test task",
 			Description: "test task description",
+			Owner:       "user",
 		}
 		taskID := uint64(1)
 		s := new(MockedServices)
@@ -274,9 +299,13 @@ func TestTaskAddHandler(t *testing.T) {
 		body, err := json.Marshal(task)
 		assert.NoError(t, err)
 
-		s.On("TaskAdd", mock.Anything, task).Return(taskID, nil)
+		s.On("TaskAdd", mock.Anything, task, task.Owner).Return(taskID, nil)
 
 		app := fiber.New()
+		app.Use(func(c *fiber.Ctx) error {
+			c.Locals(entities.UserLoginKey, task.Owner)
+			return c.Next()
+		})
 		app.Post("/tasks", h.AddHandler)
 
 		req := httptest.NewRequest(http.MethodPost, "/tasks", bytes.NewReader(body))
@@ -289,11 +318,18 @@ func TestTaskAddHandler(t *testing.T) {
 	})
 
 	t.Run("invalid JSON", func(t *testing.T) {
+
+		login := "user"
+
 		s := new(MockedServices)
 		h := &handlers.TasksHandler{
 			Service: s,
 		}
 		app := fiber.New()
+		app.Use(func(c *fiber.Ctx) error {
+			c.Locals(entities.UserLoginKey, login)
+			return c.Next()
+		})
 		app.Post("/tasks", h.AddHandler)
 
 		req := httptest.NewRequest(http.MethodPost, "/tasks", bytes.NewReader([]byte("{invalid json}")))
@@ -310,6 +346,7 @@ func TestTaskAddHandler(t *testing.T) {
 		task := entities.Task{
 			Name:        "Test task",
 			Description: "test task description",
+			Owner:       "user",
 		}
 
 		body, err := json.Marshal(task)
@@ -321,9 +358,13 @@ func TestTaskAddHandler(t *testing.T) {
 		}
 
 		app := fiber.New()
+		app.Use(func(c *fiber.Ctx) error {
+			c.Locals(entities.UserLoginKey, task.Owner)
+			return c.Next()
+		})
 		app.Post("/tasks", h.AddHandler)
 
-		s.On("TaskAdd", mock.Anything, task).Return(uint64(0), fmt.Errorf("error"))
+		s.On("TaskAdd", mock.Anything, task, task.Owner).Return(uint64(0), fmt.Errorf("error"))
 
 		req := httptest.NewRequest(http.MethodPost, "/tasks", bytes.NewReader(body))
 		resp, err := app.Test(req)
@@ -341,15 +382,20 @@ func TestTaskRemoveHandler(t *testing.T) {
 			ID:          1,
 			Name:        "Test task",
 			Description: "test task description",
+			Owner:       "user",
 		}
 
 		s := new(MockedServices)
 		h := &handlers.TasksHandler{
 			Service: s,
 		}
-		s.On("TaskRemove", mock.Anything, task.ID).Return(nil)
+		s.On("TaskRemove", mock.Anything, task.ID, task.Owner).Return(nil)
 
 		app := fiber.New()
+		app.Use(func(c *fiber.Ctx) error {
+			c.Locals(entities.UserLoginKey, task.Owner)
+			return c.Next()
+		})
 		app.Delete("/tasks/:id", h.RemoveHandler)
 
 		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/tasks/%d", task.ID), nil)
@@ -362,11 +408,16 @@ func TestTaskRemoveHandler(t *testing.T) {
 	})
 
 	t.Run("invalid id format (not uint64)", func(t *testing.T) {
+		login := "user"
 		s := new(MockedServices)
 		h := &handlers.TasksHandler{
 			Service: s,
 		}
 		app := fiber.New()
+		app.Use(func(c *fiber.Ctx) error {
+			c.Locals(entities.UserLoginKey, login)
+			return c.Next()
+		})
 		app.Delete("/tasks/:id", h.RemoveHandler)
 		for _, taskId := range []string{"string", "-1", "18446744073709551616"} {
 			req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/tasks/%s", taskId), nil)
@@ -382,14 +433,19 @@ func TestTaskRemoveHandler(t *testing.T) {
 
 	t.Run("error not found - task not exists in storage", func(t *testing.T) {
 		taskId := uint64(1)
+		login := "user"
 
 		s := new(MockedServices)
 		h := &handlers.TasksHandler{
 			Service: s,
 		}
-		s.On("TaskRemove", mock.Anything, taskId).Return(entities.ErrNoTask)
+		s.On("TaskRemove", mock.Anything, taskId, login).Return(entities.ErrNoTask)
 
 		app := fiber.New()
+		app.Use(func(c *fiber.Ctx) error {
+			c.Locals(entities.UserLoginKey, login)
+			return c.Next()
+		})
 		app.Delete("/tasks/:id", h.RemoveHandler)
 
 		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/tasks/%d", taskId), nil)
@@ -403,14 +459,19 @@ func TestTaskRemoveHandler(t *testing.T) {
 
 	t.Run("internal server error", func(t *testing.T) {
 		taskId := uint64(1)
+		login := "user"
 
 		s := new(MockedServices)
 		h := &handlers.TasksHandler{
 			Service: s,
 		}
-		s.On("TaskRemove", mock.Anything, taskId).Return(fmt.Errorf("error"))
+		s.On("TaskRemove", mock.Anything, taskId, login).Return(fmt.Errorf("error"))
 
 		app := fiber.New()
+		app.Use(func(c *fiber.Ctx) error {
+			c.Locals(entities.UserLoginKey, login)
+			return c.Next()
+		})
 		app.Delete("/tasks/:id", h.RemoveHandler)
 
 		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/tasks/%d", taskId), nil)
@@ -426,6 +487,7 @@ func TestTaskRemoveHandler(t *testing.T) {
 func TestTaskUpdateHandler(t *testing.T) {
 	t.Run("success request", func(t *testing.T) {
 		taskId := uint64(1)
+		login := "user"
 
 		taskDTO := handlers.TaskJSON{
 			Name:        "Test task",
@@ -446,9 +508,13 @@ func TestTaskUpdateHandler(t *testing.T) {
 			Description: taskDTO.Description,
 		}
 
-		s.On("TaskUpdate", mock.Anything, task).Return(nil)
+		s.On("TaskUpdate", mock.Anything, task, login).Return(nil)
 
 		app := fiber.New()
+		app.Use(func(c *fiber.Ctx) error {
+			c.Locals(entities.UserLoginKey, login)
+			return c.Next()
+		})
 		app.Put("/tasks/:id", h.UpdateHandler)
 
 		req := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/tasks/%d", taskId), bytes.NewReader(body))
@@ -466,11 +532,16 @@ func TestTaskUpdateHandler(t *testing.T) {
 	})
 
 	t.Run("invalid id format (not uint64)", func(t *testing.T) {
+		login := "user"
 		s := new(MockedServices)
 		h := &handlers.TasksHandler{
 			Service: s,
 		}
 		app := fiber.New()
+		app.Use(func(c *fiber.Ctx) error {
+			c.Locals(entities.UserLoginKey, login)
+			return c.Next()
+		})
 		app.Put("/tasks/:id", h.UpdateHandler)
 
 		for _, taskId := range []string{"string", "-1", "18446744073709551616"} {
@@ -487,11 +558,16 @@ func TestTaskUpdateHandler(t *testing.T) {
 
 	t.Run("invalid JSON", func(t *testing.T) {
 		taskID := 1
+		login := "user"
 		s := new(MockedServices)
 		h := &handlers.TasksHandler{
 			Service: s,
 		}
 		app := fiber.New()
+		app.Use(func(c *fiber.Ctx) error {
+			c.Locals(entities.UserLoginKey, login)
+			return c.Next()
+		})
 		app.Put("/tasks/:id", h.UpdateHandler)
 
 		req := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/tasks/%d", taskID), bytes.NewReader([]byte("{invalid json}")))
@@ -512,6 +588,7 @@ func TestTaskUpdateHandler(t *testing.T) {
 
 	t.Run("task not found ", func(t *testing.T) {
 		taskId := uint64(1)
+		login := "user"
 
 		taskDTO := handlers.TaskJSON{
 			Name:        "Test task",
@@ -533,9 +610,13 @@ func TestTaskUpdateHandler(t *testing.T) {
 		}
 
 		app := fiber.New()
+		app.Use(func(c *fiber.Ctx) error {
+			c.Locals(entities.UserLoginKey, login)
+			return c.Next()
+		})
 		app.Put("/tasks/:id", h.UpdateHandler)
 
-		s.On("TaskUpdate", mock.Anything, task).Return(entities.ErrNoTask)
+		s.On("TaskUpdate", mock.Anything, task, login).Return(entities.ErrNoTask)
 
 		req := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/tasks/%d", taskId), bytes.NewReader(body))
 		defer func() {
@@ -553,7 +634,7 @@ func TestTaskUpdateHandler(t *testing.T) {
 
 	t.Run("internal server error", func(t *testing.T) {
 		taskId := uint64(1)
-
+		login := "user"
 		taskDTO := handlers.TaskJSON{
 			Name:        "Test task",
 			Description: "test task description",
@@ -574,9 +655,13 @@ func TestTaskUpdateHandler(t *testing.T) {
 		}
 
 		app := fiber.New()
+		app.Use(func(c *fiber.Ctx) error {
+			c.Locals(entities.UserLoginKey, login)
+			return c.Next()
+		})
 		app.Put("/tasks/:id", h.UpdateHandler)
 
-		s.On("TaskUpdate", mock.Anything, task).Return(fmt.Errorf("error"))
+		s.On("TaskUpdate", mock.Anything, task, login).Return(fmt.Errorf("error"))
 
 		req := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/tasks/%d", taskId), bytes.NewReader(body))
 		defer func() {

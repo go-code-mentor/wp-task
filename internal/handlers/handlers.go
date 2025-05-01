@@ -9,7 +9,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 
 	"github.com/go-code-mentor/wp-task/internal/entities"
-	"github.com/go-code-mentor/wp-task/internal/middleware/simpletoken"
 )
 
 type Service interface {
@@ -32,7 +31,10 @@ type TaskJSON struct {
 
 func (h *TasksHandler) ItemHandler(c *fiber.Ctx) error {
 
-	login := c.Locals(simpletoken.UserLoginKey).(string)
+	login, ok := c.Locals(entities.UserLoginKey).(string)
+	if !ok {
+		return fiber.ErrUnauthorized
+	}
 
 	taskId, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
@@ -49,7 +51,10 @@ func (h *TasksHandler) ItemHandler(c *fiber.Ctx) error {
 
 func (h *TasksHandler) ListHandler(c *fiber.Ctx) error {
 
-	login := c.Locals(simpletoken.UserLoginKey).(string)
+	login, ok := c.Locals(entities.UserLoginKey).(string)
+	if !ok {
+		return fiber.ErrUnauthorized
+	}
 
 	tasks, err := h.Service.Tasks(c.Context(), login)
 	if err != nil {
@@ -61,7 +66,10 @@ func (h *TasksHandler) ListHandler(c *fiber.Ctx) error {
 
 func (h *TasksHandler) AddHandler(c *fiber.Ctx) error {
 
-	login := c.Locals(simpletoken.UserLoginKey).(string)
+	login, ok := c.Locals(entities.UserLoginKey).(string)
+	if !ok {
+		return fiber.ErrUnauthorized
+	}
 
 	//Read body and parse JSON to DTO
 	var task entities.Task
@@ -92,7 +100,10 @@ func (h *TasksHandler) AddHandler(c *fiber.Ctx) error {
 
 func (h *TasksHandler) RemoveHandler(c *fiber.Ctx) error {
 
-	login := c.Locals(simpletoken.UserLoginKey).(string)
+	login, ok := c.Locals(entities.UserLoginKey).(string)
+	if !ok {
+		return fiber.ErrUnauthorized
+	}
 
 	//Fetching task id from url
 	taskId, err := strconv.ParseUint(c.Params("id"), 10, 64)
@@ -114,7 +125,10 @@ func (h *TasksHandler) RemoveHandler(c *fiber.Ctx) error {
 
 func (h *TasksHandler) UpdateHandler(c *fiber.Ctx) error {
 
-	login := c.Locals(simpletoken.UserLoginKey).(string)
+	login, ok := c.Locals(entities.UserLoginKey).(string)
+	if !ok {
+		return fiber.ErrUnauthorized
+	}
 
 	taskId, err := strconv.ParseUint(c.Params("id"), 10, 64)
 	if err != nil {

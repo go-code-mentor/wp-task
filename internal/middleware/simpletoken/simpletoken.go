@@ -4,11 +4,12 @@ import (
 	"context"
 
 	"github.com/gofiber/fiber/v2"
+
+	"github.com/go-code-mentor/wp-task/internal/entities"
 )
 
 const (
-	AuthHeader   = "Authorization"
-	UserLoginKey = "user"
+	AuthHeader = "Authorization"
 )
 
 type AuthService interface {
@@ -32,7 +33,7 @@ func (m *AuthMiddleware) Auth(c *fiber.Ctx) error {
 		return fiber.ErrUnauthorized
 	}
 
-	c.Locals(UserLoginKey, userLogin)
+	c.Locals(entities.UserLoginKey, userLogin)
 
 	return c.Next()
 }
