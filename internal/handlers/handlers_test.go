@@ -120,9 +120,29 @@ func TestTaskListHandler(t *testing.T) {
 			assert.NoError(t, err)
 			assert.Equal(t, http.StatusMethodNotAllowed, resp.StatusCode)
 
-			s.AssertNotCalled(t, "Tasks", mock.Anything)
+			s.AssertNotCalled(t, "Tasks", mock.Anything, "")
 			s.AssertExpectations(t)
 		}
+	})
+
+	t.Run("unauthorized error", func(t *testing.T) {
+
+		s := new(MockedServices)
+		h := &handlers.TasksHandler{
+			Service: s,
+		}
+
+		app := fiber.New()
+		app.Get("/tasks", h.ListHandler)
+
+		req := httptest.NewRequest(http.MethodGet, "/tasks", nil)
+
+		resp, err := app.Test(req)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+
+		s.AssertNotCalled(t, "Tasks", mock.Anything, "")
+		s.AssertExpectations(t)
 	})
 
 	t.Run("internal server error", func(t *testing.T) {
@@ -223,9 +243,31 @@ func TestTaskItemHandler(t *testing.T) {
 			assert.NoError(t, err)
 			assert.Equal(t, http.StatusMethodNotAllowed, resp.StatusCode)
 
-			s.AssertNotCalled(t, "Task", mock.Anything, taskId)
+			s.AssertNotCalled(t, "Task", mock.Anything, taskId, "")
 			s.AssertExpectations(t)
 		}
+	})
+
+	t.Run("unauthorized error", func(t *testing.T) {
+
+		taskId := uint64(1)
+
+		s := new(MockedServices)
+		h := &handlers.TasksHandler{
+			Service: s,
+		}
+
+		app := fiber.New()
+		app.Get("/tasks/:id", h.ItemHandler)
+
+		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/tasks/%d", taskId), nil)
+
+		resp, err := app.Test(req)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+
+		s.AssertNotCalled(t, "Task", mock.Anything, taskId, "")
+		s.AssertExpectations(t)
 	})
 
 	t.Run("error not found - wrong type of task id", func(t *testing.T) {
@@ -317,6 +359,26 @@ func TestTaskAddHandler(t *testing.T) {
 		s.AssertExpectations(t)
 	})
 
+	t.Run("unauthorized error", func(t *testing.T) {
+
+		s := new(MockedServices)
+		h := &handlers.TasksHandler{
+			Service: s,
+		}
+
+		app := fiber.New()
+		app.Post("/tasks", h.AddHandler)
+
+		req := httptest.NewRequest(http.MethodPost, "/tasks", nil)
+
+		resp, err := app.Test(req)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+
+		s.AssertNotCalled(t, "TaskAdd", mock.Anything, "")
+		s.AssertExpectations(t)
+	})
+
 	t.Run("invalid JSON", func(t *testing.T) {
 
 		login := "user"
@@ -404,6 +466,28 @@ func TestTaskRemoveHandler(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 
+		s.AssertExpectations(t)
+	})
+
+	t.Run("unauthorized error", func(t *testing.T) {
+
+		taskId := uint64(1)
+
+		s := new(MockedServices)
+		h := &handlers.TasksHandler{
+			Service: s,
+		}
+
+		app := fiber.New()
+		app.Delete("/tasks/:id", h.RemoveHandler)
+
+		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/tasks/%d", taskId), nil)
+
+		resp, err := app.Test(req)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+
+		s.AssertNotCalled(t, "TaskRemove", mock.Anything, taskId, "")
 		s.AssertExpectations(t)
 	})
 
@@ -528,6 +612,28 @@ func TestTaskUpdateHandler(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, fiber.StatusNoContent, resp.StatusCode)
 
+		s.AssertExpectations(t)
+	})
+
+	t.Run("unauthorized error", func(t *testing.T) {
+
+		taskId := uint64(1)
+
+		s := new(MockedServices)
+		h := &handlers.TasksHandler{
+			Service: s,
+		}
+
+		app := fiber.New()
+		app.Put("/tasks/:id", h.UpdateHandler)
+
+		req := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/tasks/%d", taskId), nil)
+
+		resp, err := app.Test(req)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+
+		s.AssertNotCalled(t, "TaskUpdate", mock.Anything, taskId, "")
 		s.AssertExpectations(t)
 	})
 
