@@ -55,7 +55,7 @@ func (suite *Suite) TearDownSuite() {
 func (suite *Suite) TestGetTasks() {
 	t := suite.T()
 
-	list, err := suite.storage.Tasks(suite.ctx)
+	list, err := suite.storage.Tasks(suite.ctx, "test-user")
 	assert.NoError(t, err)
 	assert.NotNil(t, list)
 	assert.NotNil(t, list)
