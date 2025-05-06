@@ -95,7 +95,6 @@ func (suite *Suite) TestGetTasks() {
 
 		assert.Equal(t, 2, len(list))
 		assert.Equal(t, tasks, list)
-		//assert.NotNil(t, list)
 	})
 }
 
