@@ -95,6 +95,13 @@ func (suite *Suite) TestGetTasks() {
 
 		assert.Equal(t, 2, len(list))
 		assert.Equal(t, tasks, list)
+
+		if err = suite.storage.TaskRemove(suite.ctx, task1.ID, "test-user"); err != nil {
+			fmt.Printf("Unable to remove task from storage: %v", err)
+		}
+		if err = suite.storage.TaskRemove(suite.ctx, task2.ID, "test-user"); err != nil {
+			fmt.Printf("Unable to remove task from storage: %v", err)
+		}
 	})
 }
 
