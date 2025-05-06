@@ -2,6 +2,8 @@ package storage_test
 
 import (
 	"context"
+	"fmt"
+	"github.com/go-code-mentor/wp-task/internal/entities"
 	"github.com/go-code-mentor/wp-task/internal/storage"
 	"github.com/go-code-mentor/wp-task/internal/testhelper"
 	"github.com/golang-migrate/migrate/v4"
@@ -55,11 +57,46 @@ func (suite *Suite) TearDownSuite() {
 func (suite *Suite) TestGetTasks() {
 	t := suite.T()
 
-	list, err := suite.storage.Tasks(suite.ctx, "test-user")
-	assert.NoError(t, err)
-	assert.NotNil(t, list)
-	assert.NotNil(t, list)
+	t.Run("success getting empty tasks list", func(t *testing.T) {
+		list, err := suite.storage.Tasks(suite.ctx, "test-user")
+		assert.NoError(t, err)
+		assert.NotNil(t, list)
+	})
 
+	t.Run("success getting tasks list", func(t *testing.T) {
+		task1 := entities.Task{
+			ID:          1,
+			Name:        "test-task-1",
+			Description: "test-task-1",
+			Owner:       "test-user",
+		}
+		_, err := suite.storage.TaskAdd(suite.ctx, task1, "test-user")
+		if err != nil {
+			fmt.Printf("Unable to add task to storage: %v", err)
+			return
+		}
+
+		task2 := entities.Task{
+			ID:          2,
+			Name:        "test-task-2",
+			Description: "test-task-2",
+			Owner:       "test-user",
+		}
+		_, err = suite.storage.TaskAdd(suite.ctx, task2, "test-user")
+		if err != nil {
+			fmt.Printf("Unable to add task to storage: %v", err)
+			return
+		}
+
+		tasks := []entities.Task{task1, task2}
+
+		list, err := suite.storage.Tasks(suite.ctx, "test-user")
+		assert.NoError(t, err)
+
+		assert.Equal(t, 2, len(list))
+		assert.Equal(t, tasks, list)
+		//assert.NotNil(t, list)
+	})
 }
 
 func TestSuite(t *testing.T) {
