@@ -84,9 +84,7 @@ func (suite *Suite) TestGetTasks() {
 		res, err := suite.conn.Exec(suite.ctx, query, task1.Name, task1.Description, task1.Owner, task2.Name, task2.Description, task2.Owner)
 		defer func(conn *pgx.Conn, ctx context.Context, sql string, arguments ...any) {
 			_, err := conn.Exec(ctx, sql, arguments)
-			if err != nil {
-
-			}
+			assert.NoError(t, err)
 		}(suite.conn, suite.ctx, "TRUNCATE tasks")
 		assert.NoError(t, err)
 		assert.Equal(t, 2, res.RowsAffected())
