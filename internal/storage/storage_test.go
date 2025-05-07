@@ -87,7 +87,7 @@ func (suite *Suite) TestGetTasks() {
 			assert.NoError(t, err)
 		}(suite.conn, suite.ctx, "TRUNCATE tasks")
 		assert.NoError(t, err)
-		assert.Equal(t, 2, res.RowsAffected())
+		assert.Equal(t, int64(2), res.RowsAffected())
 
 		list1, err := suite.storage.Tasks(suite.ctx, "test-user-1")
 		assert.NoError(t, err)
