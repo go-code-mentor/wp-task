@@ -87,8 +87,7 @@ func (suite *Suite) TestGetTasks() {
 		defer func() {
 			_, err := suite.conn.Exec(suite.ctx, "TRUNCATE tasks")
 			assert.NoError(t, err)
-			}()
-
+		}()
 
 		list1, err := suite.storage.Tasks(suite.ctx, "test-user-1")
 		assert.NoError(t, err)
