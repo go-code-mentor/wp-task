@@ -2,6 +2,7 @@ package storage_test
 
 import (
 	"context"
+	"github.com/go-code-mentor/wp-task/internal/entities"
 	"github.com/go-code-mentor/wp-task/internal/storage"
 	"github.com/go-code-mentor/wp-task/internal/testhelper"
 	"github.com/golang-migrate/migrate/v4"
@@ -18,6 +19,7 @@ type Suite struct {
 	pgContainer *testhelper.PostgresContainer
 	storage     *storage.Storage
 	ctx         context.Context
+	conn        *pgx.Conn
 }
 
 func (suite *Suite) SetupSuite() {
@@ -44,6 +46,8 @@ func (suite *Suite) SetupSuite() {
 
 	repository := storage.New(conn)
 	suite.storage = repository
+
+	suite.conn = conn
 }
 
 func (suite *Suite) TearDownSuite() {
@@ -55,11 +59,47 @@ func (suite *Suite) TearDownSuite() {
 func (suite *Suite) TestGetTasks() {
 	t := suite.T()
 
-	list, err := suite.storage.Tasks(suite.ctx, "test-user")
-	assert.NoError(t, err)
-	assert.NotNil(t, list)
-	assert.NotNil(t, list)
+	t.Run("success getting empty tasks list", func(t *testing.T) {
+		list, err := suite.storage.Tasks(suite.ctx, "test-user")
+		assert.NoError(t, err)
+		assert.NotNil(t, list)
+	})
 
+	t.Run("success getting tasks list", func(t *testing.T) {
+		task1 := entities.Task{
+			ID:          1,
+			Name:        "test-task-1",
+			Description: "test-task-1",
+			Owner:       "test-user-1",
+		}
+
+		task2 := entities.Task{
+			ID:          2,
+			Name:        "test-task-2",
+			Description: "test-task-2",
+			Owner:       "test-user-2",
+		}
+
+		query := "INSERT INTO tasks (name, description, owner) VALUES ($1, $2, $3),($4, $5, $6)"
+		res, err := suite.conn.Exec(suite.ctx, query, task1.Name, task1.Description, task1.Owner, task2.Name, task2.Description, task2.Owner)
+		assert.NoError(t, err)
+		assert.Equal(t, int64(2), res.RowsAffected())
+		defer func() {
+			_, err := suite.conn.Exec(suite.ctx, "TRUNCATE tasks")
+			assert.NoError(t, err)
+		}()
+
+		list1, err := suite.storage.Tasks(suite.ctx, "test-user-1")
+		assert.NoError(t, err)
+		assert.Equal(t, 1, len(list1))
+		assert.Equal(t, task1, list1[0])
+
+		list2, err := suite.storage.Tasks(suite.ctx, "test-user-2")
+		assert.NoError(t, err)
+		assert.Equal(t, 1, len(list2))
+		assert.Equal(t, task2, list2[0])
+
+	})
 }
 
 func TestSuite(t *testing.T) {
