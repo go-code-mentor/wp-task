@@ -2,7 +2,6 @@ package storage_test
 
 import (
 	"context"
-	"fmt"
 	"github.com/go-code-mentor/wp-task/internal/entities"
 	"github.com/go-code-mentor/wp-task/internal/storage"
 	"github.com/go-code-mentor/wp-task/internal/testhelper"
@@ -20,6 +19,7 @@ type Suite struct {
 	pgContainer *testhelper.PostgresContainer
 	storage     *storage.Storage
 	ctx         context.Context
+	conn        *pgx.Conn
 }
 
 func (suite *Suite) SetupSuite() {
@@ -46,6 +46,8 @@ func (suite *Suite) SetupSuite() {
 
 	repository := storage.New(conn)
 	suite.storage = repository
+
+	suite.conn = conn
 }
 
 func (suite *Suite) TearDownSuite() {
@@ -68,40 +70,37 @@ func (suite *Suite) TestGetTasks() {
 			ID:          1,
 			Name:        "test-task-1",
 			Description: "test-task-1",
-			Owner:       "test-user",
-		}
-		_, err := suite.storage.TaskAdd(suite.ctx, task1, "test-user")
-		if err != nil {
-			fmt.Printf("Unable to add task to storage: %v", err)
-			return
+			Owner:       "test-user-1",
 		}
 
 		task2 := entities.Task{
 			ID:          2,
 			Name:        "test-task-2",
 			Description: "test-task-2",
-			Owner:       "test-user",
-		}
-		_, err = suite.storage.TaskAdd(suite.ctx, task2, "test-user")
-		if err != nil {
-			fmt.Printf("Unable to add task to storage: %v", err)
-			return
+			Owner:       "test-user-2",
 		}
 
-		tasks := []entities.Task{task1, task2}
+		query := "INSERT INTO tasks (name, description, owner) VALUES ($1, $2, $3),($4, $5, $6)"
+		res, err := suite.conn.Exec(suite.ctx, query, task1.Name, task1.Description, task1.Owner, task2.Name, task2.Description, task2.Owner)
+		defer func(conn *pgx.Conn, ctx context.Context, sql string, arguments ...any) {
+			_, err := conn.Exec(ctx, sql, arguments)
+			if err != nil {
 
-		list, err := suite.storage.Tasks(suite.ctx, "test-user")
+			}
+		}(suite.conn, suite.ctx, "TRUNCATE tasks")
 		assert.NoError(t, err)
+		assert.Equal(t, 2, res.RowsAffected())
 
-		assert.Equal(t, 2, len(list))
-		assert.Equal(t, tasks, list)
+		list1, err := suite.storage.Tasks(suite.ctx, "test-user-1")
+		assert.NoError(t, err)
+		assert.Equal(t, 1, len(list1))
+		assert.Equal(t, task1, list1[0])
 
-		if err = suite.storage.TaskRemove(suite.ctx, task1.ID, "test-user"); err != nil {
-			fmt.Printf("Unable to remove task from storage: %v", err)
-		}
-		if err = suite.storage.TaskRemove(suite.ctx, task2.ID, "test-user"); err != nil {
-			fmt.Printf("Unable to remove task from storage: %v", err)
-		}
+		list2, err := suite.storage.Tasks(suite.ctx, "test-user-2")
+		assert.NoError(t, err)
+		assert.Equal(t, 1, len(list2))
+		assert.Equal(t, task2, list2[0])
+
 	})
 }
 
