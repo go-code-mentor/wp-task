@@ -2,7 +2,6 @@ package storage_test
 
 import (
 	"context"
-	"fmt"
 	"github.com/go-code-mentor/wp-task/internal/entities"
 	"github.com/go-code-mentor/wp-task/internal/storage"
 	"github.com/go-code-mentor/wp-task/internal/testhelper"
@@ -84,10 +83,8 @@ func (suite *Suite) TestGetTasks() {
 		query := "INSERT INTO tasks (name, description, owner) VALUES ($1, $2, $3),($4, $5, $6)"
 		res, err := suite.conn.Exec(suite.ctx, query, task1.Name, task1.Description, task1.Owner, task2.Name, task2.Description, task2.Owner)
 		defer func(conn *pgx.Conn, ctx context.Context, sql string, arguments ...any) {
-			_, err := conn.Exec(ctx, sql, arguments)
-			if err != nil {
-				fmt.Printf("Unable to truncate table tasks: %v", err)
-			}
+			_, err := conn.Exec(ctx, sql)
+			assert.NoError(t, err)
 		}(suite.conn, suite.ctx, "TRUNCATE tasks")
 		assert.NoError(t, err)
 		assert.Equal(t, int64(2), res.RowsAffected())
