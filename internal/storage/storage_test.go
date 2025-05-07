@@ -82,12 +82,13 @@ func (suite *Suite) TestGetTasks() {
 
 		query := "INSERT INTO tasks (name, description, owner) VALUES ($1, $2, $3),($4, $5, $6)"
 		res, err := suite.conn.Exec(suite.ctx, query, task1.Name, task1.Description, task1.Owner, task2.Name, task2.Description, task2.Owner)
-		defer func(conn *pgx.Conn, ctx context.Context, sql string, arguments ...any) {
-			_, err := conn.Exec(ctx, sql)
-			assert.NoError(t, err)
-		}(suite.conn, suite.ctx, "TRUNCATE tasks")
 		assert.NoError(t, err)
 		assert.Equal(t, int64(2), res.RowsAffected())
+		defer func() {
+			_, err := suite.conn.Exec(suite.ctx, "TRUNCATE tasks")
+			assert.NoError(t, err)
+			}()
+
 
 		list1, err := suite.storage.Tasks(suite.ctx, "test-user-1")
 		assert.NoError(t, err)
