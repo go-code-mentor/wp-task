@@ -85,7 +85,7 @@ func (suite *Suite) TestGetTasks() {
 		assert.NoError(t, err)
 		assert.Equal(t, int64(2), res.RowsAffected())
 		defer func() {
-			_, err := suite.conn.Exec(suite.ctx, "TRUNCATE tasks")
+			_, err := suite.conn.Exec(suite.ctx, "TRUNCATE tasks RESTART IDENTITY")
 			assert.NoError(t, err)
 		}()
 
@@ -100,6 +100,40 @@ func (suite *Suite) TestGetTasks() {
 		assert.Equal(t, task2, list2[0])
 
 	})
+}
+
+func (suite *Suite) TestRemoveTasks() {
+	t := suite.T()
+
+	t.Run("success remove task", func(t *testing.T) {
+		task := entities.Task{
+			ID:          1,
+			Name:        "test-task",
+			Description: "test-task",
+			Owner:       "test-user",
+		}
+
+		query := "INSERT INTO tasks (name, description, owner) VALUES ($1, $2, $3)"
+		res, err := suite.conn.Exec(suite.ctx, query, task.Name, task.Description, task.Owner)
+		assert.NoError(t, err)
+		assert.Equal(t, int64(1), res.RowsAffected())
+		defer func() {
+			_, err := suite.conn.Exec(suite.ctx, "TRUNCATE tasks RESTART IDENTITY")
+			assert.NoError(t, err)
+		}()
+
+		err = suite.storage.TaskRemove(suite.ctx, 1, "test-user")
+		assert.NoError(t, err)
+
+	})
+
+	t.Run("removing unexisted task", func(t *testing.T) {
+		err := suite.storage.TaskRemove(suite.ctx, 1, "test-user")
+		if assert.Error(t, err) {
+			assert.ErrorIs(t, err, entities.ErrNoTask)
+		}
+	})
+
 }
 
 func TestSuite(t *testing.T) {
