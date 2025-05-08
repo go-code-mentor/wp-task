@@ -154,7 +154,7 @@ func (suite *Suite) TestUpdateTask() {
 
 		err := suite.storage.TaskUpdate(suite.ctx, task, "test-user-1")
 		if assert.Error(t, err) {
-			assert.ErrorIs(t, entities.ErrNoTask, err)
+			assert.ErrorIs(t, err, entities.ErrNoTask)
 		}
 
 		_, err = suite.conn.Exec(suite.ctx, "TRUNCATE tasks")
