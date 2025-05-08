@@ -177,7 +177,7 @@ func (suite *Suite) TestAddTask() {
 		assert.NoError(t, err)
 		assert.Equal(t, uint64(1), id)
 
-		_, err = suite.conn.Exec(suite.ctx, "TRUNCATE tasks")
+		_, err = suite.conn.Exec(suite.ctx, "TRUNCATE tasks RESTART IDENTITY")
 		assert.NoError(t, err)
 
 	})
