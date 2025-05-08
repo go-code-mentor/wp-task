@@ -128,7 +128,7 @@ func (suite *Suite) TestGetTask() {
 			assert.NoError(t, err)
 		}()
 
-		list, err := suite.storage.Tasks(suite.ctx, "test-user")
+		list, err := suite.storage.Task(suite.ctx, 1, "test-user")
 		assert.NoError(t, err)
 		assert.Equal(t, task, list)
 	})
