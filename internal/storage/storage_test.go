@@ -85,7 +85,7 @@ func (suite *Suite) TestGetTasks() {
 		assert.NoError(t, err)
 		assert.Equal(t, int64(2), res.RowsAffected())
 		defer func() {
-			_, err := suite.conn.Exec(suite.ctx, "TRUNCATE tasks")
+			_, err := suite.conn.Exec(suite.ctx, "TRUNCATE tasks RESTART IDENTITY")
 			assert.NoError(t, err)
 		}()
 
