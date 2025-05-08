@@ -102,6 +102,16 @@ func (suite *Suite) TestGetTasks() {
 	})
 }
 
+func (suite *Suite) TestGetTask() {
+	t := suite.T()
+	t.Run("getting unexisted task", func(t *testing.T) {
+		list, err := suite.storage.Task(suite.ctx, 1, "test-user")
+		assert.Equal(t, pgx.ErrNoRows, err)
+		assert.NotNil(t, list)
+	})
+
+}
+
 func TestSuite(t *testing.T) {
 	suite.Run(t, new(Suite))
 }
