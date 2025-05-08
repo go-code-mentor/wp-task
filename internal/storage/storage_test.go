@@ -102,6 +102,27 @@ func (suite *Suite) TestGetTasks() {
 	})
 }
 
+func (suite *Suite) TestAddTask() {
+	t := suite.T()
+
+	t.Run("success adding task", func(t *testing.T) {
+		task := entities.Task{
+			ID:          1,
+			Name:        "test-task",
+			Description: "test-task",
+			Owner:       "test-user",
+		}
+
+		id, err := suite.storage.TaskAdd(suite.ctx, task, "test-user")
+		assert.NoError(t, err)
+		assert.Equal(t, uint64(1), id)
+
+		_, err = suite.conn.Exec(suite.ctx, "TRUNCATE tasks")
+		assert.NoError(t, err)
+
+	})
+}
+
 func TestSuite(t *testing.T) {
 	suite.Run(t, new(Suite))
 }
