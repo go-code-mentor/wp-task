@@ -107,7 +107,6 @@ func (suite *Suite) TestUpdateTask() {
 
 	t.Run("success updating task", func(t *testing.T) {
 		origTask := entities.Task{
-			ID:          1,
 			Name:        "test-task-1",
 			Description: "test-task-1",
 			Owner:       "test-user-1",
@@ -143,6 +142,18 @@ func (suite *Suite) TestUpdateTask() {
 		assert.Equal(t, updTask.Name, task.Name)
 		assert.Equal(t, updTask.Description, task.Description)
 		assert.Equal(t, updTask.Owner, task.Owner)
+	})
+
+	t.Run("updating unexisted task", func(t *testing.T) {
+		task := entities.Task{
+			ID:          1,
+			Name:        "test-task-1",
+			Description: "test-task-1",
+			Owner:       "test-user-1",
+		}
+
+		err := suite.storage.TaskUpdate(suite.ctx, task, "test-user-1")
+		assert.NoError(t, err)
 	})
 }
 
