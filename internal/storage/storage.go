@@ -41,6 +41,7 @@ func (s *Storage) Task(ctx context.Context, id uint64, login string) (entities.T
 	if err != nil {
 		return entities.Task{}, fmt.Errorf("unable to get query task from storage: %w", err)
 	}
+	defer row.Close()
 
 	taskSQL, err = pgx.CollectOneRow(row, pgx.RowToStructByPos[TaskSQL])
 	if err != nil {
