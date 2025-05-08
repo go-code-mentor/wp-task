@@ -111,6 +111,27 @@ func (suite *Suite) TestGetTask() {
 		assert.NotNil(t, list)
 	})
 
+	t.Run("success getting task", func(t *testing.T) {
+		task := entities.Task{
+			ID:          1,
+			Name:        "test-task",
+			Description: "test-task",
+			Owner:       "test-user",
+		}
+
+		query := "INSERT INTO tasks (name, description, owner) VALUES ($1, $2, $3)"
+		res, err := suite.conn.Exec(suite.ctx, query, task.Name, task.Description, task.Owner)
+		assert.NoError(t, err)
+		assert.Equal(t, int64(1), res.RowsAffected())
+		defer func() {
+			_, err := suite.conn.Exec(suite.ctx, "TRUNCATE tasks")
+			assert.NoError(t, err)
+		}()
+
+		list, err := suite.storage.Tasks(suite.ctx, "test-user")
+		assert.NoError(t, err)
+		assert.Equal(t, task, list)
+	})
 }
 
 func (suite *Suite) TestRemoveTasks() {
