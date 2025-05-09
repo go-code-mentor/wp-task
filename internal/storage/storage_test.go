@@ -149,7 +149,7 @@ func (suite *Suite) TestGetTask() {
 		}
 
 		query := "INSERT INTO tasks (name, description, owner) VALUES ($1, $2, $3),($4, $5, $6)"
-		res, err := suite.conn.Exec(suite.ctx, query, task.Name, task.Description, task.Owner, task2.Name, task.Description, task.Owner)
+		res, err := suite.conn.Exec(suite.ctx, query, task.Name, task.Description, task.Owner, task2.Name, task2.Description, task2.Owner)
 		assert.NoError(t, err)
 		assert.Equal(t, int64(2), res.RowsAffected())
 		defer func() {
