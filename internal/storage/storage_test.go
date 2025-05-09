@@ -124,6 +124,10 @@ func (suite *Suite) TestRemoveTasks() {
 
 		err = suite.storage.TaskRemove(suite.ctx, 1, "test-user")
 		assert.NoError(t, err)
+		var taskSQL storage.TaskSQL
+		query = `SELECT id, name, description, owner FROM tasks WHERE id=$1 AND owner=$2`
+		err = suite.conn.QueryRow(suite.ctx, query, 1, "test-user").Scan(&taskSQL.ID, &taskSQL.Name, &taskSQL.Description, &taskSQL.Owner)
+		assert.ErrorIs(t, err, pgx.ErrNoRows)
 
 	})
 
