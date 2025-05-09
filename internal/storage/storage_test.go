@@ -182,7 +182,10 @@ func (suite *Suite) TestAddTask() {
 		query := `SELECT id, name, description, owner FROM tasks WHERE id=$1 AND owner=$2`
 		err = suite.conn.QueryRow(suite.ctx, query, 1, "test-user").Scan(&taskSQL.ID, &taskSQL.Name, &taskSQL.Description, &taskSQL.Owner)
 		assert.NoError(t, err)
-		assert.Equal(t, task, taskSQL)
+		assert.Equal(t, task.ID, taskSQL.ID)
+		assert.Equal(t, task.Name, taskSQL.Name)
+		assert.Equal(t, task.Description, taskSQL.Description)
+		assert.Equal(t, task.Owner, taskSQL.Owner)
 
 		_, err = suite.conn.Exec(suite.ctx, "TRUNCATE tasks RESTART IDENTITY")
 		assert.NoError(t, err)
