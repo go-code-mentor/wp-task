@@ -48,11 +48,6 @@ func (s *Storage) Task(ctx context.Context, id uint64, login string) (entities.T
 		return entities.Task{}, fmt.Errorf("unable to get parse row to DTO: %w", err)
 	}
 
-	taskSQL, err = pgx.CollectOneRow(row, pgx.RowToStructByPos[TaskSQL])
-	if err != nil {
-		return entities.Task{}, fmt.Errorf("unable to get parse row to DTO: %w", err)
-	}
-
 	// Convert DTO to entity
 	task := entities.Task{
 		ID:          taskSQL.ID,
