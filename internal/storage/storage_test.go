@@ -140,6 +140,66 @@ func (suite *Suite) TestRemoveTasks() {
 
 }
 
+func (suite *Suite) TestUpdateTask() {
+	t := suite.T()
+
+	t.Run("success updating task", func(t *testing.T) {
+		origTask := entities.Task{
+			Name:        "test-task-1",
+			Description: "test-task-1",
+			Owner:       "test-user-1",
+		}
+		updTask := entities.Task{
+			ID:          1,
+			Name:        "test-task-2",
+			Description: "test-task-2",
+			Owner:       "test-user-1",
+		}
+
+		query := "INSERT INTO tasks (name, description, owner) VALUES ($1, $2, $3)"
+		res, err := suite.conn.Exec(suite.ctx, query, origTask.Name, origTask.Description, origTask.Owner)
+		assert.NoError(t, err)
+		assert.Equal(t, int64(1), res.RowsAffected())
+		defer func() {
+			_, err := suite.conn.Exec(suite.ctx, "TRUNCATE tasks RESTART IDENTITY")
+			assert.NoError(t, err)
+		}()
+
+		err = suite.storage.TaskUpdate(suite.ctx, updTask, "test-user-1")
+		assert.NoError(t, err)
+
+		var task storage.TaskSQL
+		query = `SELECT id, name, description, owner FROM tasks WHERE id=$1 AND owner=$2`
+		row, err := suite.conn.Query(suite.ctx, query, 1, "test-user-1")
+		assert.NoError(t, err)
+		defer row.Close()
+
+		task, err = pgx.CollectOneRow(row, pgx.RowToStructByPos[storage.TaskSQL])
+		assert.NoError(t, err)
+		assert.Equal(t, updTask.ID, task.ID)
+		assert.Equal(t, updTask.Name, task.Name)
+		assert.Equal(t, updTask.Description, task.Description)
+		assert.Equal(t, updTask.Owner, task.Owner)
+	})
+
+	t.Run("updating unexisted task", func(t *testing.T) {
+		task := entities.Task{
+			ID:          1,
+			Name:        "test-task-1",
+			Description: "test-task-1",
+			Owner:       "test-user-1",
+		}
+
+		err := suite.storage.TaskUpdate(suite.ctx, task, "test-user-1")
+		if assert.Error(t, err) {
+			assert.ErrorIs(t, err, entities.ErrNoTask)
+		}
+
+		_, err = suite.conn.Exec(suite.ctx, "TRUNCATE tasks RESTART IDENTITY")
+		assert.NoError(t, err)
+	})
+}
+
 func TestSuite(t *testing.T) {
 	suite.Run(t, new(Suite))
 }
