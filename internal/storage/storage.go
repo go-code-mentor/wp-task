@@ -93,9 +93,12 @@ func (s *Storage) TaskRemove(ctx context.Context, id uint64, login string) error
 
 	// Run SQL query
 	query := `DELETE FROM tasks WHERE id=$1 and owner=$2`
-	_, err := s.conn.Exec(c, query, id, login)
+	row, err := s.conn.Exec(c, query, id, login)
 	if err != nil {
 		return fmt.Errorf("unbale to remove task from storage: %w", err)
+	}
+	if row.RowsAffected() == 0 {
+		return fmt.Errorf("unable to remove task from storage: %w", entities.ErrNoTask)
 	}
 
 	return nil
