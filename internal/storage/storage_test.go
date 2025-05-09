@@ -158,7 +158,7 @@ func (suite *Suite) TestGetTask() {
 		}()
 
 		taskDB, err := suite.storage.Task(suite.ctx, 2, "test-user")
-		assert.Nil(t, taskDB)
+		assert.Equal(t, entities.Task{}, taskDB)
 		assert.ErrorIs(t, err, pgx.ErrNoRows)
 
 	})
