@@ -102,6 +102,68 @@ func (suite *Suite) TestGetTasks() {
 	})
 }
 
+func (suite *Suite) TestGetTask() {
+	t := suite.T()
+
+	t.Run("success getting task", func(t *testing.T) {
+		task := entities.Task{
+			ID:          1,
+			Name:        "test-task",
+			Description: "test-task",
+			Owner:       "test-user",
+		}
+
+		query := "INSERT INTO tasks (name, description, owner) VALUES ($1, $2, $3)"
+		res, err := suite.conn.Exec(suite.ctx, query, task.Name, task.Description, task.Owner)
+		assert.NoError(t, err)
+		assert.Equal(t, int64(1), res.RowsAffected())
+		defer func() {
+			_, err := suite.conn.Exec(suite.ctx, "TRUNCATE tasks RESTART IDENTITY")
+			assert.NoError(t, err)
+		}()
+
+		taskDB, err := suite.storage.Task(suite.ctx, 1, "test-user")
+		assert.NoError(t, err)
+		assert.Equal(t, task, taskDB)
+	})
+
+	t.Run("getting unexisted task", func(t *testing.T) {
+		task, err := suite.storage.Task(suite.ctx, 1, "test-user")
+		assert.Error(t, pgx.ErrNoRows, err)
+		assert.NotNil(t, task)
+	})
+
+	t.Run("getting not your task", func(t *testing.T) {
+		task := entities.Task{
+			ID:          1,
+			Name:        "test-task",
+			Description: "test-task",
+			Owner:       "test-user",
+		}
+
+		task2 := entities.Task{
+			ID:          2,
+			Name:        "test-task-2",
+			Description: "test-task-2",
+			Owner:       "test-user-2",
+		}
+
+		query := "INSERT INTO tasks (name, description, owner) VALUES ($1, $2, $3),($4, $5, $6)"
+		res, err := suite.conn.Exec(suite.ctx, query, task.Name, task.Description, task.Owner, task2.Name, task2.Description, task2.Owner)
+		assert.NoError(t, err)
+		assert.Equal(t, int64(2), res.RowsAffected())
+		defer func() {
+			_, err := suite.conn.Exec(suite.ctx, "TRUNCATE tasks RESTART IDENTITY")
+			assert.NoError(t, err)
+		}()
+
+		taskDB, err := suite.storage.Task(suite.ctx, 2, "test-user")
+		assert.Equal(t, entities.Task{}, taskDB)
+		assert.ErrorIs(t, err, pgx.ErrNoRows)
+
+	})
+}
+
 func (suite *Suite) TestRemoveTasks() {
 	t := suite.T()
 

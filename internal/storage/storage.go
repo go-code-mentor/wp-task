@@ -37,9 +37,15 @@ func (s *Storage) Task(ctx context.Context, id uint64, login string) (entities.T
 
 	// Run SQL query
 	query := `SELECT id, name, description, owner FROM tasks WHERE id=$1 AND owner=$2`
-	err := s.conn.QueryRow(c, query, id, login).Scan(&taskSQL)
+	row, err := s.conn.Query(c, query, id, login)
 	if err != nil {
 		return entities.Task{}, fmt.Errorf("unable to get query task from storage: %w", err)
+	}
+	defer row.Close()
+
+	taskSQL, err = pgx.CollectOneRow(row, pgx.RowToStructByPos[TaskSQL])
+	if err != nil {
+		return entities.Task{}, fmt.Errorf("unable to get parse row to DTO: %w", err)
 	}
 
 	// Convert DTO to entity
