@@ -14,24 +14,39 @@ func (suite *Suite) TestGetUserLogin() {
 		token := "test-token"
 		loginExpected := "test-login"
 
-		query := "INSERT INTO users (login) VALUES ($1)"
-		res, err := suite.conn.Exec(suite.ctx, query, loginExpected)
-		assert.NoError(t, err)
-		assert.Equal(t, int64(1), res.RowsAffected())
+		data := []struct {
+			login string
+			token string
+		}{
+			{"l1", "t1"},
+			{loginExpected, token},
+			{"l3", "t3"},
+			{"l4", "t4"},
+		}
 
-		var userID uint64
-		query = "SELECT id FROM users WHERE login=$1"
-		err = suite.conn.QueryRow(suite.ctx, query, loginExpected).Scan(&userID)
-		assert.NoError(t, err)
+		for _, s := range data {
+			query := "INSERT INTO users (login) VALUES ($1)"
+			res, err := suite.conn.Exec(suite.ctx, query, s.login)
+			assert.NoError(t, err)
+			assert.Equal(t, int64(1), res.RowsAffected())
 
-		query = "INSERT INTO access_tokens (user_id, token) VALUES ($1, $2)"
-		res, err = suite.conn.Exec(suite.ctx, query, userID, token)
-		assert.NoError(t, err)
-		assert.Equal(t, int64(1), res.RowsAffected())
+			var userID uint64
+			query = "SELECT id FROM users WHERE login=$1"
+			err = suite.conn.QueryRow(suite.ctx, query, s.login).Scan(&userID)
+			assert.NoError(t, err)
+
+			query = "INSERT INTO access_tokens (user_id, token) VALUES ($1, $2)"
+			res, err = suite.conn.Exec(suite.ctx, query, userID, s.token)
+			assert.NoError(t, err)
+			assert.Equal(t, int64(1), res.RowsAffected())
+		}
 
 		loginActual, err := suite.storage.GetUserLogin(suite.ctx, token)
 		assert.NoError(t, err)
 		assert.Equal(t, loginExpected, loginActual)
+
+		_, err = suite.conn.Exec(suite.ctx, "TRUNCATE users RESTART IDENTITY CASCADE")
+		assert.NoError(t, err)
 	})
 
 	t.Run("getting unexisted login", func(t *testing.T) {
