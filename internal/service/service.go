@@ -70,25 +70,16 @@ func (s *Service) TaskAdd(ctx context.Context, task entities.Task, login string)
 	if err != nil {
 		return 0, fmt.Errorf("unable to add task: %w", err)
 	}
-	return id, nil
-}
 
-func (s *Service) TaskSendToTg(ctx context.Context, id uint64, login string) error {
-	task, err := s.Task(ctx, id, login)
-	if err != nil {
-		return fmt.Errorf("sending task to tg error: %w", err)
-	}
-
-	_, err = s.TgClient.TaskAdd(context.Background(), &tgapi.TaskAddRequest{
-		Id:          task.ID,
+	_, err = s.TgClient.TaskAdd(ctx, &tgapi.TaskAddRequest{
+		Id:          id,
 		Name:        task.Name,
 		Description: task.Description,
-		Owner:       task.Owner,
+		Owner:       login,
 	})
-
 	if err != nil {
-		return fmt.Errorf("sending task to tg error: %w", err)
+		return 0, fmt.Errorf("sending task to tg error: %w", err)
 	}
 
-	return nil
+	return id, nil
 }

@@ -7,7 +7,6 @@ import (
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/log"
 
 	"github.com/go-code-mentor/wp-task/internal/entities"
 )
@@ -18,7 +17,6 @@ type Service interface {
 	Task(ctx context.Context, id uint64, login string) (entities.Task, error)
 	TaskRemove(ctx context.Context, id uint64, login string) error
 	TaskUpdate(ctx context.Context, task entities.Task, login string) error
-	TaskSendToTg(ctx context.Context, id uint64, login string) error
 }
 
 type TasksHandler struct {
@@ -87,7 +85,7 @@ func (h *TasksHandler) AddHandler(c *fiber.Ctx) error {
 	}
 
 	//Add task with service
-	taskJSON.ID, err = h.Service.TaskAdd(c.Context(), task, login)
+	taskJSON.ID, err = h.Service.TaskAdd(context.Background(), task, login)
 	if err != nil {
 		return fiber.ErrInternalServerError
 	}
@@ -96,13 +94,6 @@ func (h *TasksHandler) AddHandler(c *fiber.Ctx) error {
 	if err != nil {
 		return fiber.ErrInternalServerError
 	}
-
-	go func() {
-		err = h.Service.TaskSendToTg(context.Background(), taskJSON.ID, login)
-		if err != nil {
-			log.Errorf("unable to send task to tg: %v", err)
-		}
-	}()
 
 	return c.SendStatus(fiber.StatusCreated)
 }
