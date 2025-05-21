@@ -29,3 +29,5 @@ go.work.sum
 bin/
 .air.toml
 .env
+
+compose.override.yaml

@@ -7,6 +7,10 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
 	"github.com/jackc/pgx/v5"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+
+	tgapi "github.com/go-code-mentor/wp-tg-bot/api"
 
 	"github.com/go-code-mentor/wp-task/internal/handlers"
 	"github.com/go-code-mentor/wp-task/internal/middleware/simpletoken"
@@ -22,9 +26,11 @@ func New(cfg Config) *App {
 }
 
 type App struct {
-	cfg    Config
-	server *fiber.App
-	conn   *pgx.Conn
+	cfg      Config
+	server   *fiber.App
+	conn     *pgx.Conn
+	tgConn   *grpc.ClientConn
+	tgClient tgapi.TgBotClient
 }
 
 func (a *App) Build() error {
@@ -32,6 +38,12 @@ func (a *App) Build() error {
 	if err := a.connectDb(); err != nil {
 		return fmt.Errorf("failed to get db connection: %w", err)
 	}
+
+	if err := a.connectTg(); err != nil {
+		return fmt.Errorf("failed to get tg bot connection: %w", err)
+	}
+
+	a.tgClient = tgapi.NewTgBotClient(a.tgConn)
 
 	a.server = fiber.New()
 
@@ -41,7 +53,7 @@ func (a *App) Build() error {
 	authMiddleware := simpletoken.AuthMiddleware{Service: userService}
 	a.server.Use(authMiddleware.Auth)
 
-	appService := service.New(appStorage)
+	appService := service.New(appStorage, a.tgClient)
 	tasksHandler := handlers.TasksHandler{Service: appService}
 
 	api := a.server.Group("/api")
@@ -60,7 +72,12 @@ func (a *App) Run() error {
 	defer func() {
 		err := a.conn.Close(context.Background())
 		if err != nil {
-			log.Errorf("failed to close connection: %s", err)
+			log.Errorf("failed to close db connection: %s", err)
+		}
+
+		err = a.tgConn.Close()
+		if err != nil {
+			log.Errorf("failed to close tg bot connection: %s", err)
 		}
 	}()
 	return a.server.Listen(":3000")
@@ -78,6 +95,17 @@ func (a *App) connectDb() error {
 	}
 
 	a.conn = conn
+
+	return nil
+}
+
+func (a *App) connectTg() error {
+	conn, err := grpc.NewClient(a.cfg.tg_uri, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return fmt.Errorf("could not connect tg bot: %w", err)
+	}
+
+	a.tgConn = conn
 
 	return nil
 }
