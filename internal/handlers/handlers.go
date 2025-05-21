@@ -85,7 +85,7 @@ func (h *TasksHandler) AddHandler(c *fiber.Ctx) error {
 	}
 
 	//Add task with service
-	taskJSON.ID, err = h.Service.TaskAdd(context.Background(), task, login)
+	taskJSON.ID, err = h.Service.TaskAdd(c.Context(), task, login)
 	if err != nil {
 		return fiber.ErrInternalServerError
 	}
