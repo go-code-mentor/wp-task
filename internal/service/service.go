@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	tgapi "github.com/go-code-mentor/wp-tg-bot/api"
-
 	"github.com/go-code-mentor/wp-task/internal/entities"
 )
 
@@ -21,7 +19,11 @@ type TaskStorage interface {
 	TaskAdd(ctx context.Context, task entities.Task, login string) (uint64, error)
 }
 
-func New(storage Storage, tgClient tgapi.TgBotClient) *Service {
+type TgTaskSender interface {
+	SendTask(ctx context.Context, id uint64, name string, description string, login string) error
+}
+
+func New(storage Storage, tgClient TgTaskSender) *Service {
 	return &Service{
 		Storage:  storage,
 		TgClient: tgClient,
@@ -30,7 +32,7 @@ func New(storage Storage, tgClient tgapi.TgBotClient) *Service {
 
 type Service struct {
 	Storage  Storage
-	TgClient tgapi.TgBotClient
+	TgClient TgTaskSender
 }
 
 func (s *Service) Task(ctx context.Context, id uint64, login string) (entities.Task, error) {
@@ -71,14 +73,8 @@ func (s *Service) TaskAdd(ctx context.Context, task entities.Task, login string)
 		return 0, fmt.Errorf("unable to add task: %w", err)
 	}
 
-	_, err = s.TgClient.TaskAdd(ctx, &tgapi.TaskAddRequest{
-		Id:          id,
-		Name:        task.Name,
-		Description: task.Description,
-		Owner:       login,
-	})
-	if err != nil {
-		return 0, fmt.Errorf("sending task to tg error: %w", err)
+	if err := s.TgClient.SendTask(ctx, id, task.Name, task.Description, login); err != nil {
+		return 0, fmt.Errorf("%w", err)
 	}
 
 	return id, nil

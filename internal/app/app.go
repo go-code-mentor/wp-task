@@ -10,11 +10,10 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	tgapi "github.com/go-code-mentor/wp-tg-bot/api"
-
 	"github.com/go-code-mentor/wp-task/internal/handlers"
 	"github.com/go-code-mentor/wp-task/internal/middleware/simpletoken"
 	"github.com/go-code-mentor/wp-task/internal/service"
+	"github.com/go-code-mentor/wp-task/internal/service/tgclient"
 	userservice "github.com/go-code-mentor/wp-task/internal/service/users"
 	"github.com/go-code-mentor/wp-task/internal/storage"
 )
@@ -26,11 +25,10 @@ func New(cfg Config) *App {
 }
 
 type App struct {
-	cfg      Config
-	server   *fiber.App
-	conn     *pgx.Conn
-	tgConn   *grpc.ClientConn
-	tgClient tgapi.TgBotClient
+	cfg    Config
+	server *fiber.App
+	conn   *pgx.Conn
+	tgConn *grpc.ClientConn
 }
 
 func (a *App) Build() error {
@@ -43,8 +41,6 @@ func (a *App) Build() error {
 		return fmt.Errorf("failed to get tg bot connection: %w", err)
 	}
 
-	a.tgClient = tgapi.NewTgBotClient(a.tgConn)
-
 	a.server = fiber.New()
 
 	appStorage := storage.New(a.conn)
@@ -53,7 +49,7 @@ func (a *App) Build() error {
 	authMiddleware := simpletoken.AuthMiddleware{Service: userService}
 	a.server.Use(authMiddleware.Auth)
 
-	appService := service.New(appStorage, a.tgClient)
+	appService := service.New(appStorage, tgclient.New(a.tgConn))
 	tasksHandler := handlers.TasksHandler{Service: appService}
 
 	api := a.server.Group("/api")
