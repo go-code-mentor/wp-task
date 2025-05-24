@@ -19,14 +19,20 @@ type TaskStorage interface {
 	TaskAdd(ctx context.Context, task entities.Task, login string) (uint64, error)
 }
 
-func New(storage Storage) *Service {
+type TgTaskSender interface {
+	SendTask(ctx context.Context, id uint64, name string, description string, login string) error
+}
+
+func New(storage Storage, tgClient TgTaskSender) *Service {
 	return &Service{
-		Storage: storage,
+		Storage:  storage,
+		TgClient: tgClient,
 	}
 }
 
 type Service struct {
-	Storage Storage
+	Storage  Storage
+	TgClient TgTaskSender
 }
 
 func (s *Service) Task(ctx context.Context, id uint64, login string) (entities.Task, error) {
@@ -66,5 +72,10 @@ func (s *Service) TaskAdd(ctx context.Context, task entities.Task, login string)
 	if err != nil {
 		return 0, fmt.Errorf("unable to add task: %w", err)
 	}
+
+	if err := s.TgClient.SendTask(ctx, id, task.Name, task.Description, login); err != nil {
+		return 0, fmt.Errorf("%w", err)
+	}
+
 	return id, nil
 }

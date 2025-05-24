@@ -13,11 +13,16 @@ func ParseConfig() (Config, error) {
 		return cfg, err
 	}
 
+	if err := cfg.parseTg(); err != nil {
+		return cfg, err
+	}
+
 	return cfg, nil
 }
 
 type Config struct {
 	pg_uri string
+	tg_uri string
 }
 
 func (c *Config) ConnString() string {
@@ -42,6 +47,23 @@ func (c *Config) parseDb() error {
 	c.pg_uri = fmt.Sprintf(
 		"postgresql://%s:%s@%s:%s/%s?sslmode=disable&search_path=public",
 		cfg.User, cfg.Password, cfg.Host, cfg.Port, cfg.Name)
+
+	return nil
+}
+
+type ConfigTgService struct {
+	Host string `yaml:"tg_service_host" env:"TG_SERVICE_HOST" env-default:"localhost"`
+	Port string `yaml:"tg_service_port" env:"TG_SERVICE_PORT" env-default:"8000"`
+}
+
+func (c *Config) parseTg() error {
+
+	var cfg ConfigTgService
+	if err := cleanenv.ReadEnv(&cfg); err != nil {
+		return err
+	}
+
+	c.tg_uri = fmt.Sprintf("%s:%s", cfg.Host, cfg.Port)
 
 	return nil
 }
