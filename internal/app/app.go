@@ -16,6 +16,7 @@ import (
 	"github.com/go-code-mentor/wp-task/internal/service/tgclient"
 	userservice "github.com/go-code-mentor/wp-task/internal/service/users"
 	"github.com/go-code-mentor/wp-task/internal/storage"
+	tgapi "github.com/go-code-mentor/wp-tg-bot/api"
 )
 
 func New(cfg Config) *App {
@@ -49,7 +50,9 @@ func (a *App) Build() error {
 	authMiddleware := simpletoken.AuthMiddleware{Service: userService}
 	a.server.Use(authMiddleware.Auth)
 
-	appService := service.New(appStorage, tgclient.New(a.tgConn))
+	tgBot := tgapi.NewTgBotClient(a.tgConn)
+	tgService := tgclient.New(tgBot)
+	appService := service.New(appStorage, tgService)
 	tasksHandler := handlers.TasksHandler{Service: appService}
 
 	api := a.server.Group("/api")

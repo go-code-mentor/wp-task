@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"google.golang.org/grpc"
-
 	tgapi "github.com/go-code-mentor/wp-tg-bot/api"
 )
 
@@ -13,9 +11,9 @@ type Service struct {
 	api tgapi.TgBotClient
 }
 
-func New(conn *grpc.ClientConn) *Service {
+func New(api tgapi.TgBotClient) *Service {
 	return &Service{
-		api: tgapi.NewTgBotClient(conn),
+		api: api,
 	}
 }
 
